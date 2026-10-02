@@ -1,0 +1,1529 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Tarayıcıda çalışan, fizik tabanlı interaktif suluboya simülatörü: ıslak üstüne ıslak, tuz, kurutma, kaldırma, maskeleme, granülasyon; profesyonel kağıt ve pigmentler.">
+<meta property="og:title" content="Suluboya Atölyesi">
+<meta property="og:description" content="Tarayıcıda çalışan, fizik tabanlı interaktif suluboya simülatörü: ıslak üstüne ıslak, tuz, kurutma, kaldırma, maskeleme, granülasyon; profesyonel kağıt ve pigmentler.">
+<title>Suluboya Atölyesi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Marcellus&display=swap">
+<style>[hidden]{display:none!important}body{margin:0}</style>
+<style>
+/* Layout: drafting board — tool rail | taped cotton sheet on a slate board | porcelain palette panel */
+:root{
+  --board:#B4BEBA; --board-ink:#1E2624; --board-ink-2:#3F4A46;
+  --panel:#F6F6F2; --panel-2:#ECEDE7; --well:#FFFFFF;
+  --ink:#1D2422; --ink-2:#56605C; --ink-3:#7A8480;
+  --line:#D7DAD3; --accent:#283583; --accent-2:#E2E5F3; --on-accent:#FFFFFF;
+  --tape:#E6DCC0; --danger:#9C3423; --scrim:rgba(18,24,23,.48);
+  --shadow:0 1px 2px rgba(20,28,26,.22),0 12px 34px rgba(20,28,26,.22);
+  --f-display:"Marcellus","Cormorant Garamond",Georgia,serif;
+  --f-ui:"Hanken Grotesk","Segoe UI",system-ui,-apple-system,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --board:#1A201F; --board-ink:#DCE2DE; --board-ink-2:#A3ADA8;
+  --panel:#212726; --panel-2:#2B3230; --well:#2E3634;
+  --ink:#E4E8E3; --ink-2:#A5AFAA; --ink-3:#7E8883;
+  --line:#3A4240; --accent:#A8B3F4; --accent-2:#2D3459; --on-accent:#121632;
+  --tape:#CFC4A6; --danger:#E3907D; --scrim:rgba(0,0,0,.6);
+  --shadow:0 1px 2px rgba(0,0,0,.55),0 12px 34px rgba(0,0,0,.5);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --board:#1A201F; --board-ink:#DCE2DE; --board-ink-2:#A3ADA8;
+  --panel:#212726; --panel-2:#2B3230; --well:#2E3634;
+  --ink:#E4E8E3; --ink-2:#A5AFAA; --ink-3:#7E8883;
+  --line:#3A4240; --accent:#A8B3F4; --accent-2:#2D3459; --on-accent:#121632;
+  --tape:#CFC4A6; --danger:#E3907D; --scrim:rgba(0,0,0,.6);
+  --shadow:0 1px 2px rgba(0,0,0,.55),0 12px 34px rgba(0,0,0,.5);
+  color-scheme:dark}
+html,body{height:100%}
+body{background:var(--board);color:var(--ink);font:13px/1.45 var(--f-ui);-webkit-font-smoothing:antialiased}
+button,select,input{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:78px minmax(0,1fr) 344px;grid-template-rows:auto minmax(0,1fr);height:100%}
+/* header */
+.top{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0;flex-wrap:wrap}
+.brand h1{font:400 22px/1.1 var(--f-display);letter-spacing:.03em;margin:0;text-wrap:balance}
+.chip{font:500 11.5px/1 var(--f-mono);color:var(--ink-2);padding:5px 9px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.btn{font:500 12.5px/1 var(--f-ui);color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:7px;padding:8px 11px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:background .12s,border-color .12s}
+.btn svg{width:15px;height:15px;flex:none}
+.btn:hover{background:var(--panel-2)}
+.btn:disabled{opacity:.45;cursor:default;background:transparent}
+.btn.solid{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.btn.solid:hover{filter:brightness(1.08)}
+.btn.sm{padding:6px 9px;font-size:12px}
+.btn.danger{color:var(--danger)}
+.btn[aria-pressed="true"]{background:var(--accent-2);border-color:var(--accent);color:var(--ink)}
+.btn.busy{border-color:var(--accent);color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* tool rail */
+.tools{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;padding:8px 6px;overflow-y:auto}
+.tool{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 2px 7px;border-radius:9px;border:1px solid transparent;background:none;color:var(--ink-2);cursor:pointer;font:500 10.5px/1.15 var(--f-ui);text-align:center}
+.tool svg{width:23px;height:23px}
+.tool:hover{background:var(--panel-2);color:var(--ink)}
+.tool[aria-pressed="true"]{background:var(--accent-2);color:var(--ink);border-color:var(--accent)}
+.tool[aria-pressed="true"] svg{color:var(--accent)}
+/* board + sheet */
+.board{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:22px 16px 12px;min-width:0;min-height:0;overflow:hidden}
+.sheet{position:relative;box-shadow:var(--shadow);background:#F4F0E5;flex:none}
+.sheet canvas{display:block;width:100%;height:100%;touch-action:none;cursor:none}
+.tape{position:absolute;background:var(--tape);pointer-events:none;opacity:.94;box-shadow:0 1px 1px rgba(0,0,0,.12)}
+.tape.t{left:-10px;right:-10px;top:-8px;height:15px;clip-path:polygon(0 12%,1.5% 0,99% 6%,100% 92%,98% 100%,1% 88%)}
+.tape.b{left:-10px;right:-10px;bottom:-8px;height:15px;clip-path:polygon(1% 10%,99% 0,100% 85%,98.5% 100%,0 92%)}
+.tape.l{top:-10px;bottom:-10px;left:-8px;width:15px;clip-path:polygon(10% 1%,100% 0,92% 99%,100% 100%,0 98.5%)}
+.tape.r{top:-10px;bottom:-10px;right:-8px;width:15px;clip-path:polygon(0 0,90% 1%,100% 99%,8% 100%)}
+.cursor{position:absolute;left:0;top:0;border-radius:50%;pointer-events:none;border:1.5px solid rgba(255,255,255,.95);box-shadow:0 0 0 1px rgba(20,24,30,.55),inset 0 0 0 1px rgba(20,24,30,.35);transform:translate(-50%,-50%);will-change:left,top}
+.cursor.dashed{border-style:dashed}
+.demo-tag{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);background:rgba(20,26,25,.72);color:#F2F2EE;font:500 12px/1.2 var(--f-ui);padding:7px 12px;border-radius:999px;pointer-events:none;white-space:nowrap;max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis}
+.status{display:flex;align-items:center;justify-content:space-between;gap:6px 16px;flex-wrap:wrap;color:var(--board-ink);font-size:12.5px;min-height:20px}
+.status .grp{display:flex;align-items:center;gap:8px;min-width:0}
+.wetdot{width:10px;height:10px;border-radius:50%;background:transparent;border:1.5px solid var(--board-ink-2);flex:none}
+.status .mono{font-family:var(--f-mono);font-size:11.5px;color:var(--board-ink-2);font-variant-numeric:tabular-nums}
+/* panel */
+.panel{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;min-height:0}
+.sec{padding:14px 16px 16px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.sec h2{font:400 11.5px/1.2 var(--f-display);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sec h2 small{font:500 11px var(--f-mono);letter-spacing:0;text-transform:none;color:var(--ink-3)}
+select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);cursor:pointer}
+.pdesc{margin:0;color:var(--ink-2);font-size:12.5px}
+.wells{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px 8px;padding:12px 10px;border-radius:14px;background:var(--well);box-shadow:inset 0 1px 3px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+.wellwrap{display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;min-width:0}
+.well{width:100%;aspect-ratio:1;border-radius:50%;border:none;padding:0;cursor:pointer;box-shadow:inset 0 2px 5px rgba(0,0,0,.28),0 0 0 1px rgba(0,0,0,.08)}
+.well[aria-pressed="true"]{box-shadow:inset 0 2px 5px rgba(0,0,0,.28),0 0 0 2px var(--well),0 0 0 4px var(--accent)}
+.wellcode{font:500 9.5px/1 var(--f-mono);color:var(--ink-3);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wellx{position:absolute;top:-5px;right:-3px;width:17px;height:17px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);font:600 11px/1 var(--f-ui);display:grid;place-items:center;cursor:pointer;padding:0}
+.wellx:hover{color:var(--danger)}
+.empty{grid-column:1/-1;color:var(--ink-2);font-size:12.5px;padding:6px 2px;text-align:center}
+.palbtns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.palbtns .btn{justify-content:center}
+.strip{height:38px;border-radius:7px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.07)}
+.striplab{display:flex;justify-content:space-between;font:500 10.5px var(--f-mono);color:var(--ink-3);margin-top:-4px}
+.pname{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.pname b{font:600 15px/1.25 var(--f-ui)}
+.pname code{font:500 11.5px var(--f-mono);color:var(--ink-2);white-space:nowrap}
+.props{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;align-items:center;font-size:12px;color:var(--ink-2);margin:0}
+.props dt{margin:0}.props dd{margin:0;display:flex;align-items:center;gap:8px;color:var(--ink)}
+.meter{display:inline-flex;gap:2px}
+.meter i{width:11px;height:5px;border-radius:2px;background:var(--line)}
+.meter i.on{background:var(--ink-2)}
+.note{margin:0;font-size:12.5px;color:var(--ink-2)}
+.part{display:grid;grid-template-columns:18px minmax(0,1fr) 92px 22px;align-items:center;gap:8px}
+.part .dotc{width:18px;height:18px;border-radius:50%;box-shadow:inset 0 1px 2px rgba(0,0,0,.25)}
+.part span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
+.part button{width:22px;height:22px;border-radius:6px;border:1px solid var(--line);background:none;cursor:pointer;color:var(--ink-2);padding:0}
+.hint{margin:0;font-size:12px;color:var(--ink-2);background:var(--panel-2);border-radius:8px;padding:8px 10px}
+.row{display:grid;grid-template-columns:78px minmax(0,1fr) 54px;align-items:center;gap:10px}
+.row label{font-size:12.5px;color:var(--ink-2)}
+.row output{font:500 11.5px var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--accent);margin:0;cursor:pointer}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px;background:var(--panel)}
+.seg button{flex:1 1 0;min-width:0;border:none;background:none;border-radius:7px;padding:7px 4px;cursor:pointer;font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg button[aria-pressed="true"]{background:var(--accent-2);color:var(--ink);font-weight:600}
+.lbl{font-size:12px;color:var(--ink-2);margin-bottom:-4px}
+.tip{margin:0;font-size:12.5px;color:var(--ink-2)}
+.res{height:6px;border-radius:3px;background:var(--panel-2);overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
+.res i{display:block;height:100%;background:var(--accent);width:100%;transition:width .08s linear}
+.reslab{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2)}
+.reslab span:last-child{font-family:var(--f-mono);font-size:11.5px}
+.papers{display:flex;flex-direction:column;gap:6px}
+.paper-opt{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:10px;background:none;cursor:pointer;text-align:left}
+.paper-opt:hover{background:var(--panel-2)}
+.paper-opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-2)}
+.paper-sw{width:44px;height:44px;border-radius:6px;box-shadow:0 0 0 1px rgba(0,0,0,.1);background-size:cover}
+.paper-opt b{display:block;font-size:13px;font-weight:600}
+.paper-opt .spec{display:block;font:500 11px var(--f-mono);color:var(--ink-2);margin-top:1px}
+.paper-detail{display:flex;flex-direction:column;gap:8px;padding:2px 2px 0}
+.mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px;font-size:12px;color:var(--ink-2)}
+.mgrid div{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.tiltwrap{display:grid;grid-template-columns:112px minmax(0,1fr);gap:14px;align-items:center}
+#tilt{width:112px;height:112px;touch-action:none;cursor:crosshair;display:block;border-radius:50%}
+.t-ring{fill:var(--panel-2);stroke:var(--line);stroke-width:1.2}
+.t-mid{fill:none;stroke:var(--line);stroke-width:1;stroke-dasharray:2 3}
+.t-axis{stroke:var(--line);stroke-width:1}
+.t-vec{stroke:var(--accent);stroke-width:2.5;stroke-linecap:round}
+.t-knob{fill:var(--accent);stroke:var(--panel);stroke-width:2}
+.t-lab{font:500 8px var(--f-mono);fill:var(--ink-3)}
+.tiltinfo{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.tiltinfo .val{font:600 15px var(--f-ui)}
+.tiltinfo .sub{font-size:12px;color:var(--ink-2)}
+.btnrow{display:flex;flex-wrap:wrap;gap:6px}
+details summary{cursor:pointer;font:400 11.5px/1.2 var(--f-display);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);list-style:none;display:flex;justify-content:space-between}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"+";font-family:var(--f-mono);letter-spacing:0}
+details[open] summary::after{content:"–"}
+.guide{margin:12px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.guide li{font-size:12.5px;color:var(--ink-2)}
+.guide b{color:var(--ink);font-weight:600;display:block;margin-bottom:1px}
+/* modals */
+.modal{position:fixed;inset:0;background:var(--scrim);display:grid;place-items:center;padding:16px;z-index:50}
+.dialog{background:var(--panel);color:var(--ink);border-radius:14px;width:100%;max-width:900px;max-height:min(88vh,780px);display:flex;flex-direction:column;box-shadow:var(--shadow);overflow:hidden}
+.dialog.small{max-width:420px}
+.dhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.dhead h3{margin:0;font:400 19px var(--f-display);letter-spacing:.02em}
+.dsub{font-size:12.5px;color:var(--ink-2);margin:2px 0 0}
+.dhead input{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);min-width:0;width:200px}
+.fams{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px 0}
+.fams button{border:1px solid var(--line);background:none;border-radius:999px;padding:5px 11px;cursor:pointer;font-size:12px;color:var(--ink-2)}
+.fams button[aria-pressed="true"]{background:var(--accent-2);border-color:var(--accent);color:var(--ink)}
+.legend{margin:8px 16px 0;font:500 11px var(--f-mono);color:var(--ink-2)}.legend b{color:var(--ink)}
+.cat{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:10px;overflow-y:auto;padding:14px 16px 18px;min-height:0}
+.pc{border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px;background:var(--panel);cursor:pointer;text-align:left;position:relative;min-width:0}
+.pc:hover{border-color:var(--ink-3)}
+.pc[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.pc .sw{height:46px;border-radius:5px}
+.pc b{font-size:12.5px;font-weight:600;line-height:1.25}
+.pc code{font:500 11px var(--f-mono);color:var(--ink-2)}
+.pc .ico{display:flex;gap:8px;align-items:center;font:500 10.5px var(--f-mono);color:var(--ink-2)}
+.pc .ico svg{width:12px;height:12px}
+.pc .chk{position:absolute;top:13px;right:13px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:none;place-items:center;font-size:12px;font-weight:700}
+.pc[aria-pressed="true"] .chk{display:grid}
+.dfoot{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid var(--line)}
+.dbody{padding:16px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.dbody img{width:100%;height:auto;border-radius:4px;box-shadow:0 0 0 1px var(--line)}
+.dbody p{margin:0;font-size:13px;color:var(--ink-2)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:9px 14px;border-radius:9px;font-size:12.5px;z-index:60;box-shadow:var(--shadow);max-width:calc(100% - 32px)}
+.fatal{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:#3a3a3a;font-size:14px}
+@media (max-width: 1000px){
+  html,body{height:auto}
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto;height:auto}
+  .tools{flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--line);padding:6px 10px;gap:4px}
+  .tool{min-width:66px;flex:none}
+  .board{padding:20px 16px 14px;overflow:visible}
+  .panel{border-left:none;overflow:visible}
+}
+@media (prefers-reduced-motion: reduce){ .btn,.res i{transition:none} }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <h1>Suluboya Atölyesi</h1>
+      <span class="chip" id="paperChip">Soğuk Pres · 300 g/m²</span>
+    </div>
+    <div class="actions">
+      <button class="btn" id="undoBtn" title="Geri al (Ctrl+Z)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Geri al</button>
+      <button class="btn" id="wetAllBtn" title="Tüm kağıdı temiz suyla ıslat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s-6 7-6 11a6 6 0 0 0 12 0c0-4-6-11-6-11z"/></svg>Kağıdı ıslat</button>
+      <button class="btn" id="dryBtn" title="Tüm kağıdı hızla kurut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span>Hızlı kurut</span></button>
+      <button class="btn" id="snapBtn" title="Resmin görüntüsünü al"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 6"/></svg>Görüntü al</button>
+      <button class="btn solid" id="newBtn">Yeni kağıt</button>
+    </div>
+  </header>
+
+  <nav class="tools" id="tools" aria-label="Araçlar"></nav>
+
+  <main class="board" id="board">
+    <div class="sheet" id="sheet">
+      <canvas id="cv" aria-label="Suluboya kağıdı — boyamak için sürükleyin"></canvas>
+      <div class="tape t"></div><div class="tape b"></div><div class="tape l"></div><div class="tape r"></div>
+      <div class="cursor" id="cursor" hidden></div>
+      <div class="demo-tag" id="demoTag" hidden>Örnek çalışma · temiz başlamak için “Yeni kağıt”</div>
+    </div>
+    <div class="status">
+      <div class="grp"><span class="wetdot" id="wetDot"></span><span id="stWet">İmleci kağıdın üzerine getirin: ıslaklığı burada görürsünüz</span></div>
+      <div class="grp"><span class="mono" id="stArea">Kuru</span></div>
+    </div>
+  </main>
+
+  <aside class="panel" id="panel">
+    <section class="sec" aria-labelledby="hPal">
+      <h2 id="hPal">Palet <small id="palCount"></small></h2>
+      <select id="palSel" aria-label="Palet seçimi"></select>
+      <p class="pdesc" id="palDesc"></p>
+      <div class="wells" id="wells"></div>
+      <div class="palbtns">
+        <button class="btn sm" id="mixBtn" aria-pressed="false" title="Açıkken haznelere dokunmak rengi karışıma ekler">Karıştır</button>
+        <button class="btn sm" id="catBtn">Pigment kataloğu</button>
+        <button class="btn sm" id="newPalBtn">Yeni palet</button>
+        <button class="btn sm" id="dupPalBtn">Kopyala</button>
+        <button class="btn sm danger" id="delPalBtn" hidden>Sil</button>
+      </div>
+    </section>
+
+    <section class="sec" aria-labelledby="hPaint">
+      <h2 id="hPaint">Fırçadaki boya</h2>
+      <div class="strip" id="strip"></div>
+      <div class="striplab"><span>yoğun</span><span>sulu tül</span></div>
+      <div id="mixParts"></div>
+      <div id="pigInfo"></div>
+      <button class="btn sm" id="addMixBtn" hidden>Karışımı palete ekle</button>
+    </section>
+
+    <section class="sec" aria-labelledby="toolTitle">
+      <h2 id="toolTitle">Fırça</h2>
+      <p class="tip" id="toolTip"></p>
+      <div class="grp-shape"><div class="seg" id="shapeSeg" role="group" aria-label="Fırça tipi">
+        <button data-v="round">Yuvarlak samur</button><button data-v="flat">Düz</button><button data-v="mop">Mop (sincap)</button>
+      </div></div>
+      <div class="row grp-size"><label for="sizeR" id="sizeLab">Boyut</label><input type="range" id="sizeR" min="2" max="50" step="1" value="14"><output id="sizeO">14 mm</output></div>
+      <div class="row grp-water"><label for="waterR">Su yükü</label><input type="range" id="waterR" min="5" max="100" step="1" value="75"><output id="waterO">%75</output></div>
+      <div class="grp-cons"><div class="lbl">Kıvam (su : pigment)</div></div>
+      <div class="seg grp-cons" id="consSeg" role="group" aria-label="Kıvam"></div>
+      <div class="grp-res"><div class="reslab"><span id="resLab">Fırçadaki su</span><span id="resVal">%75</span></div><div class="res"><i id="resBar"></i></div></div>
+      <div class="grp-salt"><div class="seg" id="saltSeg" role="group" aria-label="Tuz tipi"><button data-v="coarse">İri kaya tuzu</button><button data-v="fine">İnce sofra tuzu</button></div></div>
+    </section>
+
+    <section class="sec" aria-labelledby="hPaper">
+      <h2 id="hPaper">Kağıt</h2>
+      <div class="papers" id="paperList"></div>
+      <div class="paper-detail" id="paperDetail"></div>
+    </section>
+
+    <section class="sec" aria-labelledby="hEnv">
+      <h2 id="hEnv">Masa ve ortam</h2>
+      <div class="tiltwrap">
+        <svg id="tilt" viewBox="0 0 120 120" role="slider" tabindex="0" aria-label="Kağıt eğimi ve su akış yönü" aria-valuemin="0" aria-valuemax="30" aria-valuenow="0">
+          <circle cx="60" cy="60" r="54" class="t-ring"/>
+          <circle cx="60" cy="60" r="36" class="t-mid"/><circle cx="60" cy="60" r="18" class="t-mid"/>
+          <line x1="60" y1="8" x2="60" y2="112" class="t-axis"/><line x1="8" y1="60" x2="112" y2="60" class="t-axis"/>
+          <text x="63" y="45" class="t-lab">10°</text><text x="63" y="27" class="t-lab">20°</text><text x="63" y="9.5" class="t-lab">30°</text>
+          <line id="tiltLine" x1="60" y1="60" x2="60" y2="60" class="t-vec"/>
+          <circle id="tiltKnob" cx="60" cy="60" r="7" class="t-knob"/>
+        </svg>
+        <div class="tiltinfo"><div class="val" id="tiltVal">Düz masa</div><div class="sub">Sürükleyin: su, eğim yönünde akar ve alt kenarda boncuk gibi toplanır.</div><button class="btn sm" id="tiltReset">Düzle</button></div>
+      </div>
+      <div class="row"><label for="humR">Ortam nemi</label><input type="range" id="humR" min="25" max="95" step="1" value="55"><output id="humO">%55</output></div>
+      <div class="row"><label>Zaman</label><div class="seg" id="speedSeg" role="group" aria-label="Zaman hızı" style="grid-column:2/4"><button data-v="1">1×</button><button data-v="2">2×</button><button data-v="3">3×</button></div></div>
+      <p class="tip" id="dryEst"></p>
+      <div class="btnrow"><button class="btn sm" id="unmaskAllBtn">Maskeyi kaldır</button><button class="btn sm" id="saltOffBtn">Tuzu fırçala</button></div>
+    </section>
+
+    <section class="sec">
+      <details>
+        <summary>Teknik rehberi</summary>
+        <ul class="guide">
+          <li><b>Islak üstüne ıslak</b>Alanı temiz suyla ıslatın ve parlaklık sürerken boyayın; renk yumuşak kenarlarla dağılır.</li>
+          <li><b>Kademeli yıkama</b>Eğimi 10–15° aşağı verin, yatay vuruşlarla inin. Su alt kenarda boncuk gibi toplanır.</li>
+          <li><b>Sırlama (glaze)</b>Alttaki kat tamamen kuruyunca üzerine sürün. Kurumuş pigment yerinde kalır, renkler optik olarak karışır.</li>
+          <li><b>Çiçeklenme (backrun)</b>Parlaklığı yeni kaybolmuş, hâlâ nemli bir yıkamaya temiz su ya da sprey verin.</li>
+          <li><b>Tuz</b>Nemli ve mat aşamada serpin. Kristaller suyu çekip pigmenti iter; kuruyunca “Tuzu fırçala”.</li>
+          <li><b>Kuru fırça</b>Su yükünü %25’in altına, kıvamı kremaya alın ve hızlı sürün; boya yalnız doku tepelerine değer.</li>
+          <li><b>Kaldırma</b>“Kaldır” ile ovun ya da ıslak boyayı “Kurula” ile çekin. Ftalo ve kinakridonlar leke bırakır.</li>
+          <li><b>Maskeleme</b>Maskeyi kuru kağıda sürün, üzerinden boyayın; kuruyunca “Maske sil” ile beyazı açın.</li>
+          <li><b>Granülasyon</b>Ultramarin, Potter Pembesi, Mars Siyahı gibi ağır pigmentler kaba kağıtta vadilere çöker.</li>
+        </ul>
+      </details>
+    </section>
+  </aside>
+</div>
+
+<div class="modal" id="catModal" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="catTitle">
+    <div class="dhead">
+      <div><h3 id="catTitle">Pigment kataloğu</h3><p class="dsub" id="catSub"></p></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input id="palName" aria-label="Palet adı" hidden maxlength="28"><button class="btn solid" id="catDone">Bitti</button></div>
+    </div>
+    <div class="fams" id="fams"></div>
+    <p class="legend">Kare: şeffaf / yarı / opak · <b>G</b> granülasyon 0–4 · <b>B</b> boyayıcılık (leke) 0–4 · <b>I–II</b> ışık haslığı</p>
+    <div class="cat" id="catGrid"></div>
+  </div>
+</div>
+
+<div class="modal" id="snapModal" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="snapTitle">
+    <div class="dhead"><h3 id="snapTitle">Resminiz</h3><div style="display:flex;gap:8px"><button class="btn" id="snapCopy">Panoya kopyala</button><button class="btn solid" id="snapClose">Kapat</button></div></div>
+    <div class="dbody"><p>Kaydetmek için görsele sağ tıklayıp “Resmi farklı kaydet”i seçin; telefonda görsele basılı tutun.</p><img id="snapImg" alt="Suluboya resminizin görüntüsü"></div>
+  </div>
+</div>
+
+<div class="modal" id="askModal" hidden>
+  <div class="dialog small" role="alertdialog" aria-modal="true" aria-labelledby="askTitle">
+    <div class="dbody"><h3 id="askTitle" style="margin:0;font:400 18px var(--f-display)"></h3><p id="askMsg"></p></div>
+    <div class="dfoot"><button class="btn" id="askNo">Vazgeç</button><button class="btn solid" id="askYes">Devam</button></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+'use strict';
+const $ = (s) => document.querySelector(s);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const smooth = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
+const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+const store = { get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }, set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} } };
+
+/* ---------------- Data ---------------- */
+const PIGMENTS = [
+ {id:'py3',  n:'Hansa Limon', ci:'PY3', fam:'sari', hex:'#EFE03A', tint:'#F2E66A', op:.25, g:0, st:.30, lf:'II', str:1.0, note:'Soğuk, yeşile kayan sarı. Yeşil karışımları temiz tutar.'},
+ {id:'py184',n:'Bizmut Sarı', ci:'PY184', fam:'sari', hex:'#F1D92C', tint:'#F3E88A', op:.75, g:.05, st:.15, lf:'I', str:.9, note:'Opak limon sarısı; alttaki katmanı örter.'},
+ {id:'py35', n:'Kadmiyum Sarı Orta', ci:'PY35', fam:'sari', hex:'#F3AA1C', tint:'#F7C85A', op:.85, g:.10, st:.10, lf:'I', str:1.0, note:'Sıcak, opak ve parlak. Gün ışığı ve çiçekler için.'},
+ {id:'py150',n:'Nikel Azo Sarı', ci:'PY150', fam:'sari', hex:'#B88B2A', tint:'#D9B260', op:.10, g:0, st:.45, lf:'I', str:1.0, note:'Şeffaf altın sarısı; açık tonu sıcak, yoğun hali kehribar.'},
+ {id:'py43', n:'Sarı Okr', ci:'PY43', fam:'toprak', hex:'#C48E36', tint:'#DDB772', op:.60, g:.30, st:.15, lf:'I', str:.8, note:'Doğal demir oksit; hafif granüle, yarı opak.'},
+ {id:'po73', n:'Pirol Turuncu', ci:'PO73', fam:'kirmizi', hex:'#EC5A26', tint:'#F28A5A', op:.50, g:0, st:.55, lf:'I', str:1.1, note:'Parlak, güçlü turuncu.'},
+ {id:'pr108',n:'Kadmiyum Kırmızı Açık', ci:'PR108', fam:'kirmizi', hex:'#DD3A2A', tint:'#EA7560', cal:'o', op:.90, g:.10, st:.10, lf:'I', str:1.0, note:'Opak, sıcak kırmızı. Zorn paletindeki vermilyonun karşılığı.'},
+ {id:'pr254',n:'Pirol Kırmızı', ci:'PR254', fam:'kirmizi', hex:'#C62229', tint:'#E06468', cal:'o', op:.50, g:0, st:.50, lf:'I', str:1.15, note:'Saf, sıcak kırmızı; karışımlarda baskın.'},
+ {id:'pv19', n:'Kinakridon Gül', ci:'PV19', fam:'kirmizi', hex:'#C22B5B', tint:'#E07C9E', op:.10, g:0, st:.70, lf:'I', str:1.1, note:'Soğuk, şeffaf gül. Leke yapar, zor kalkar.'},
+ {id:'pr122',n:'Kinakridon Macenta', ci:'PR122', fam:'kirmizi', hex:'#A12466', tint:'#CD6A9C', op:.10, g:0, st:.70, lf:'I', str:1.0, note:'Mavilerle temiz morlar verir.'},
+ {id:'pr179',n:'Perilen Bordo', ci:'PR179', fam:'kirmizi', hex:'#681C27', tint:'#A55B66', op:.20, g:0, st:.65, lf:'I', str:1.1, note:'Derin şarap kırmızısı; sıcak gölgeler.'},
+ {id:'pr233',n:'Potter Pembesi', ci:'PR233', fam:'kirmizi', hex:'#AE7C78', tint:'#C9A3A0', op:.55, g:.95, st:.05, lf:'I', str:.6, note:'Ağır granüle; pigment kağıt vadilerinde kum gibi toplanır.'},
+ {id:'pbr7a',n:'Ham Siena', ci:'PBr7', fam:'toprak', hex:'#B67336', tint:'#D6A06A', op:.35, g:.35, st:.20, lf:'I', str:.8, note:'Sıcak, ışıltılı toprak sarısı.'},
+ {id:'pbr7b',n:'Yanık Siena', ci:'PBr7', fam:'toprak', hex:'#8A4326', tint:'#C07A55', op:.30, g:.45, st:.25, lf:'I', str:.9, note:'Ultramarinle klasik granüle griler verir.'},
+ {id:'pr101',n:'Şeffaf Kırmızı Oksit', ci:'PR101', fam:'toprak', hex:'#983A1E', tint:'#C26D4E', op:.15, g:.15, st:.45, lf:'I', str:1.0, note:'Şeffaf pas kırmızısı; ten ve sonbahar.'},
+ {id:'pbr7c',n:'Yanık Umbra', ci:'PBr7', fam:'toprak', hex:'#4E3A2A', tint:'#9A8670', op:.45, g:.55, st:.20, lf:'I', str:.9, note:'Serin koyu kahve; granüle.'},
+ {id:'sepia',n:'Sepya', ci:'PBr7·PBk6', fam:'notr', hex:'#3C3028', tint:'#8E8070', op:.45, g:.30, st:.35, lf:'I', str:1.0, note:'Sıcak koyu nötr; çizim ve gölge.'},
+ {id:'pb29', n:'Fransız Ultramarin', ci:'PB29', fam:'mavi', hex:'#2B3899', tint:'#8C98CF', op:.20, g:.90, st:.05, lf:'I', str:.9, note:'Klasik granülasyon; toprak renklerle ayrışır, kolay kalkar.'},
+ {id:'pb28', n:'Kobalt Mavi', ci:'PB28', fam:'mavi', hex:'#2C5BA8', tint:'#829DD4', op:.40, g:.70, st:.05, lf:'I', str:.7, note:'Dengeli, saf mavi; hafif granüle.'},
+ {id:'pb35', n:'Seruleum Mavi', ci:'PB35', fam:'mavi', hex:'#3577BE', tint:'#74A0D2', Sx:.8, op:.65, g:.75, st:.05, lf:'I', str:.7, note:'Yarı opak gökyüzü mavisi; granüle.'},
+ {id:'pb15', n:'Ftalo Mavi (Yeşil Ton)', ci:'PB15:3', fam:'mavi', hex:'#0F3A7A', tint:'#5A93C8', op:.05, g:0, st:.95, lf:'I', str:1.7, note:'Çok güçlü ve boyayıcı; azı yeter, kaldırılamaz.'},
+ {id:'pb27', n:'Prusya Mavisi', ci:'PB27', fam:'mavi', hex:'#1B3550', tint:'#6E8EA6', op:.10, g:.05, st:.85, lf:'I', str:1.3, note:'Derin, yeşile çalan mavi; gece ve deniz.'},
+ {id:'pb60', n:'İndantron Mavi', ci:'PB60', fam:'mavi', hex:'#292F4D', tint:'#7A80A4', op:.10, g:.15, st:.60, lf:'I', str:1.0, note:'Mürekkep gibi koyu, soğuk mavi.'},
+ {id:'pg7',  n:'Ftalo Yeşil (Mavi Ton)', ci:'PG7', fam:'yesil', hex:'#0B5847', tint:'#4FA08A', op:.05, g:0, st:.95, lf:'I', str:1.6, note:'Yoğun, şeffaf ve boyayıcı yeşil.'},
+ {id:'pg18', n:'Viridyan', ci:'PG18', fam:'yesil', hex:'#23826B', tint:'#7DBBA6', op:.20, g:.50, st:.10, lf:'I', str:.7, note:'Serin zümrüt; hafif granüle, kolay kalkar.'},
+ {id:'sap',  n:'Özsu Yeşili', ci:'PG36·PY150', fam:'yesil', hex:'#4B6923', tint:'#9DB06A', op:.20, g:.05, st:.60, lf:'I', str:1.0, note:'Sıcak yaprak yeşili.'},
+ {id:'pg17', n:'Krom Oksit Yeşil', ci:'PG17', fam:'yesil', hex:'#657F59', tint:'#A6B596', cal:'o', op:.85, g:.40, st:.10, lf:'I', str:.8, note:'Opak, toprak tonlu yeşil.'},
+ {id:'pv23', n:'Dioksazin Mor', ci:'PV23', fam:'mor', hex:'#3A2461', tint:'#8F78B0', op:.10, g:0, st:.85, lf:'II', str:1.5, note:'Çok güçlü, boyayıcı mor.'},
+ {id:'pv15', n:'Ultramarin Mor', ci:'PV15', fam:'mor', hex:'#6A599C', tint:'#A99BC8', op:.30, g:.90, st:.05, lf:'I', str:.6, note:'Yumuşak, granüle mor; uzak tepeler.'},
+ {id:'payne',n:'Payne Grisi', ci:'PB29·PBk6', fam:'notr', hex:'#2D3543', tint:'#7D8794', op:.30, g:.35, st:.30, lf:'I', str:1.0, note:'Mavimsi koyu gri; fırtınalı gökler.'},
+ {id:'neut', n:'Nötr Ton', ci:'PBk6·PV19·PB15', fam:'notr', hex:'#2B2930', tint:'#85828A', op:.20, g:.05, st:.50, lf:'I', str:1.0, note:'Rengin tonunu bozmadan koyulaştırır.'},
+ {id:'pbk6', n:'Lamba Siyahı', ci:'PBk6', fam:'notr', hex:'#1D1D20', tint:'#8C8C8E', cal:'o', op:.60, g:.10, st:.45, lf:'I', str:1.2, note:'İnce karbon; ıslakta topaklanarak yayılır.'},
+ {id:'pbk11',n:'Mars Siyahı', ci:'PBk11', fam:'notr', hex:'#292520', tint:'#8E8A84', cal:'o', op:.70, g:1.0, st:.05, lf:'I', str:.9, note:'Manyetik demir oksit; en güçlü granülasyon.'},
+ {id:'pw4',  n:'Çin Beyazı', ci:'PW4', fam:'notr', hex:'#F5F4EF', tint:'#F8F7F3', cal:'w', op:.90, g:0, st:0, lf:'I', str:1.0, note:'Opak çinko beyazı; sisler, yumuşatma ve pastel tonlar.'},
+];
+const FAMS = [['all','Tümü'],['sari','Sarı'],['kirmizi','Kırmızı'],['toprak','Toprak'],['mavi','Mavi'],['yesil','Yeşil'],['mor','Mor'],['notr','Nötr']];
+const PRESETS = [
+ {id:'split', n:'Bölünmüş primer', d:'Her ana rengin sıcak ve soğuk hali; temiz karışımlar.', w:['py3','py35','pr254','pv19','pb29','pb15','pbr7b','payne']},
+ {id:'land', n:'Manzara', d:'Gökyüzü, tepeler ve yeşillikler için toprak ağırlıklı.', w:['py43','pbr7a','pbr7b','pbr7c','pb29','pb35','pg18','sap','payne']},
+ {id:'port', n:'Portre ve ten', d:'Sıcak tenler ve serin gölgeler.', w:['py43','pr108','pv19','pr101','pb28','pbr7c','pv15','pw4']},
+ {id:'gran', n:'Granülasyon seti', d:'Dokulu, kumlu yıkamalar için ağır pigmentler.', w:['pb29','pv15','pb35','pb28','pr233','pbk11','pbr7c','pg18']},
+ {id:'zorn', n:'Zorn (sınırlı palet)', d:'Anders Zorn’un dört renklik sınırlı paleti: okr, kırmızı, siyah, beyaz.', w:['py43','pr108','pbk6','pw4']},
+ {id:'bot',  n:'Botanik', d:'Parlak çiçek renkleri ve canlı yeşiller.', w:['py3','py150','pr122','pv19','pr254','pb15','pg7','pv23','pr179']},
+ {id:'night',n:'Gece ve deniz', d:'Derin maviler, yeşiller ve nötrler.', w:['pb27','pb60','pg7','payne','neut','pv19','pw4']},
+];
+const PAPERS = [
+ {id:'cp300', n:'Soğuk Pres', spec:'%100 pamuk · 300 g/m²', size:'Jelatin tutkallı · doğal beyaz', tone:'#F5F1E6', m:{Doku:3,Emicilik:2,Kaldırma:4,'Islak süre':3},
+  d:'Dengeli: yumuşak geçişler, belirgin granülasyon, iyi kaldırma. Profesyonellerin varsayılanı.',
+  sw:{f:.11,s:2.2}, p:{type:0,freq:150,amp:1.0,absorb:.0016,cap:.09,tension:.15,lift:1.0,evap:1.0,capD:.012,granVis:1.0,fiberVis:.03}},
+ {id:'hp300', n:'Sıcak Pres', spec:'%100 pamuk · 300 g/m²', size:'Sert tutkallı · parlak beyaz', tone:'#FAF9F4', m:{Doku:1,Emicilik:1,Kaldırma:5,'Islak süre':2},
+  d:'Pürüzsüz yüzey; boya üstte kalır. Sert kenarlar ve çiçeklenmeler belirgin, kolay kaldırılır.',
+  sw:{f:.45,s:.5}, p:{type:1,freq:170,amp:.32,absorb:.0009,cap:.075,tension:.17,lift:1.5,evap:1.05,capD:.007,granVis:.55,fiberVis:.02}},
+ {id:'rough300', n:'Kaba (Rough)', spec:'%100 pamuk · 300 g/m²', size:'Jelatin tutkallı · doğal beyaz', tone:'#F6F2E7', m:{Doku:5,Emicilik:2,Kaldırma:3,'Islak süre':3},
+  d:'Derin doku: en güçlü granülasyon ve kuru fırçada ışıltılı beyaz noktalar.',
+  sw:{f:.07,s:3.6}, p:{type:2,freq:95,amp:1.6,absorb:.0017,cap:.1,tension:.14,lift:.9,evap:1.0,capD:.012,granVis:1.45,fiberVis:.03}},
+ {id:'cp640', n:'Soğuk Pres Ağır', spec:'%100 pamuk · 640 g/m²', size:'Jelatin tutkallı · doğal beyaz', tone:'#F4EFE3', m:{Doku:3,Emicilik:3,Kaldırma:4,'Islak süre':5},
+  d:'Çok su tutar ve geç kurur; ıslak üstüne ıslak için uzun çalışma süresi verir, esnemez.',
+  sw:{f:.1,s:2.5}, p:{type:0,freq:140,amp:1.1,absorb:.0018,cap:.18,tension:.16,lift:1.0,evap:.75,capD:.016,granVis:1.05,fiberVis:.03}},
+ {id:'cell200', n:'Selüloz öğrenci', spec:'Ağaç selülozu · 200 g/m²', size:'Zayıf tutkal (AKD) · soğuk beyaz', tone:'#F8F8F3', m:{Doku:2,Emicilik:4,Kaldırma:1,'Islak süre':1},
+  d:'Hızlı emer: lekeli katmanlar, kontrolsüz kenarlar ve zor kaldırma. Farkı görmek için deneyin.',
+  sw:{f:.2,s:1.3}, p:{type:3,freq:220,amp:.65,absorb:.006,cap:.06,tension:.11,lift:.35,evap:1.3,capD:.03,granVis:.65,fiberVis:.04}},
+ {id:'washi', n:'Kozo (washi)', spec:'Japon dut lifi · 40 g/m²', size:'Tutkalsız · fildişi', tone:'#F3EEDF', m:{Doku:2,Emicilik:5,Kaldırma:1,'Islak süre':1},
+  d:'Deneysel: tutkalsız uzun lifler boyayı tüylendirir, kenarlar lif boyunca dağılır.',
+  sw:{f:.03,s:1.2,fib:1}, p:{type:4,freq:60,amp:.45,absorb:.02,cap:.04,tension:.05,lift:.2,evap:1.4,capD:.12,granVis:.4,fiberVis:.12}},
+];
+const CONS = [{n:'Çay',c:.55},{n:'Kahve',c:1.3},{n:'Süt',c:2.3},{n:'Krema',c:3.6},{n:'Tereyağı',c:5.2}];
+const TOOLS = [
+ {id:'brush', label:'Fırça', key:'b', title:'Fırça', tip:'Pigmentli fırça. Islak alana değerse renk yayılır; kuru kağıtta keskin kenar bırakır. Fırça vuruş boyunca suyunu tüketir.',
+  svg:'<path d="M20.5 3.5 14 10"/><path d="m12.4 8.6 3 3"/><path d="M12.7 9.8C9 11 6.5 14.2 4 20.5c5.8-1.8 9.2-4.6 10.5-8.6"/>'},
+ {id:'water', label:'Temiz su', key:'w', title:'Temiz su', tip:'Temiz suyla ıslatın. Yarı kurumuş boyaya değerse çiçeklenme (backrun) açar.',
+  svg:'<path d="M12 3s-6 7-6 11a6 6 0 0 0 12 0c0-4-6-11-6-11z"/><path d="M9.5 14.5a2.6 2.6 0 0 0 2.5 2.5"/>'},
+ {id:'lift', label:'Kaldır', key:'l', title:'Kaldırma', tip:'Nemli, susuz fırçayla ovun: gevşeyen pigmenti fırça çeker. Boyayıcı pigmentler zor kalkar.',
+  svg:'<path d="M4 20.5c2-5 4.5-7.4 8-8.3"/><path d="m10.6 10.3 3 3"/><path d="M12.5 11.5 16 8"/><path d="M18.5 3v7"/><path d="m15.8 5.6 2.7-2.6 2.7 2.6"/>'},
+ {id:'blot', label:'Kurula', key:'k', title:'Kağıt havlu', tip:'Buruşuk kağıt havluyla bastırın: ıslak boyayı ve suyu çeker, kırışık dokusu bırakır.',
+  svg:'<path d="m4 7 5-2.5 4 2 6-1.5-1 6 1.5 5.5-6 2.5-4-2-5 1.5 1-6z"/><path d="m9 4.5 1 6-4 3"/><path d="m10 10.5 5 1 2.5-5"/><path d="m15 11.5-.5 7"/>'},
+ {id:'spray', label:'Sprey', key:'s', title:'Su spreyi', tip:'Su püskürtün: nemli boyada yumuşak benekler ve çiçeklenmeler; kuru kağıtta küçük damlalar.',
+  svg:'<path d="M8 10h6v10a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1z"/><path d="M9 10V6.5h4V10"/><path d="M13 7h3.5l-1 2"/><path d="M19 4.5h.01M20.5 7.5h.01M19 10.5h.01M21.5 4h.01"/>'},
+ {id:'salt', label:'Tuz', key:'t', title:'Tuz', tip:'Parlaklık yeni kaybolmuşken serpin: tuz suyu çeker, pigmenti iter ve yıldız desenleri açar. Çok ıslakta etkisi azalır.',
+  svg:'<path d="M8 9.5C8 6.3 9.8 4 12 4s4 2.3 4 5.5"/><path d="M7 9.5h10l-1.2 10.5H8.2z"/><path d="M10.5 6.8h.01M13.5 6.8h.01M12 5.4h.01"/>'},
+ {id:'mask', label:'Maske', key:'m', title:'Maskeleme sıvısı', tip:'Kuru kağıda sürün. Maske suyu ve boyayı iter; işiniz bitince silerek beyazı açın.',
+  svg:'<path d="M9 3h6v3l2 3v10.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 7 19.5V9l2-3z"/><path d="M7 13h10"/><path d="M9.5 16.5h5"/>'},
+ {id:'unmask', label:'Maske sil', key:'e', title:'Maske silgisi', tip:'Kauçuk silgiyle maskeyi kaldırın; altındaki temiz kağıt açılır.',
+  svg:'<path d="m4 15.5 9-9 6.5 6.5-7.5 7.5H7.5z"/><path d="m9.3 10.3 6.4 6.4"/><path d="M13 20.5h7"/>'},
+ {id:'dryer', label:'Kurutucu', key:'d', title:'Saç kurutma makinesi', tip:'Sıcak hava: bölgesel hızlı kurutma. Islak birikintileri hava akışıyla iter.',
+  svg:'<path d="M3.5 8.5A5 5 0 0 1 8.5 3.5H15v10H8.5a5 5 0 0 1-5-5z"/><path d="M15 5h4.5v7H15"/><path d="m8.5 13.5 1.3 7h3l-1.3-7"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21.5 6.5h.5M21.5 10.5h.5"/>'},
+];
+
+/* ---------------- Color science (Kubelka–Munk) ---------------- */
+const s2l = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+const l2s = (x) => { x = clamp(x, 0, 1); return x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055; };
+const hexLin = (h) => [1, 3, 5].map((i) => s2l(parseInt(h.slice(i, i + 2), 16)));
+function kmR(K, S, Rg){
+  S = Math.max(S, 1e-4); const a = 1 + K / S; const b = Math.sqrt(Math.max(a * a - 1, 1e-8)); const x = b * S;
+  const bc = x < 0.02 ? (1 / S) * (1 + x * x / 3) : b / Math.tanh(Math.min(x, 15));
+  return clamp((1 - Rg * (a - bc)) / (a - Rg + bc), 0, 1);
+}
+/* Each pigment is calibrated from swatch references on white paper (Rg 0.88):
+   transparent and earth pigments from a light-wash tint (c = 0.35/strength), opaque cadmium/oxide/black
+   pigments from masstone hue (K/S of R∞) with the overall scattering fitted to the tint's lightness. */
+const lum = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+const PIG = {};
+for (const p of PIGMENTS){
+  const c0 = 0.35 / p.str; let K, S;
+  if (p.cal === 'o' || p.cal === 'w'){
+    const M = hexLin(p.hex).map((v) => clamp(v, p.cal === 'w' ? 0.5 : 0.04, 0.96));
+    const ratio = M.map((m) => (1 - m) * (1 - m) / (2 * m));
+    if (p.cal === 'w') S = 1.8;
+    else { const T = lum(hexLin(p.tint)); let lo = 0.01, hi = 60;
+      for (let i = 0; i < 60; i++){ const s = Math.sqrt(lo * hi); if (lum([0, 1, 2].map((j) => kmR(ratio[j] * s * c0, s * c0, 0.88))) > T) lo = s; else hi = s; }
+      S = Math.sqrt(lo * hi); }
+    K = ratio.map((r) => r * S);
+  } else {
+    S = 0.02 + (p.Sx || 1.5) * Math.pow(p.op, 1.6);
+    K = hexLin(p.tint).map((t) => { t = Math.min(t, kmR(0, S * c0, 0.88) - 0.002); let lo = 0, hi = 80;
+      for (let i = 0; i < 50; i++){ const m = (lo + hi) / 2; if (kmR(m * c0, S * c0, 0.88) > t) lo = m; else hi = m; } return (lo + hi) / 2; });
+  }
+  p.A = [K[0] * p.str, K[1] * p.str, K[2] * p.str, S * p.str];
+  p.B = [1, p.g, p.st];
+  PIG[p.id] = p;
+}
+function mixVec(parts){
+  const A = [0, 0, 0, 0], B = [0, 0, 0]; let t = 0;
+  for (const q of parts){ const p = PIG[q.id]; if (!p) continue; t += q.r; for (let i = 0; i < 4; i++) A[i] += p.A[i] * q.r; for (let i = 0; i < 3; i++) B[i] += p.B[i] * q.r; }
+  if (t > 0){ for (let i = 0; i < 4; i++) A[i] /= t; for (let i = 0; i < 3; i++) B[i] /= t; }
+  return { A, B };
+}
+let toneLin = hexLin('#F5F1E6');
+function cssAt(A, c){
+  const r = [0, 1, 2].map((i) => Math.round(l2s(kmR(A[i] * c, A[3] * c, toneLin[i])) * 255));
+  return `rgb(${r[0]},${r[1]},${r[2]})`;
+}
+const stripCSS = (A) => `linear-gradient(90deg,${[1.9, 1.15, .7, .42, .24, .12, .05].map((c, i) => `${cssAt(A, c)} ${Math.round(i / 6 * 100)}%`).join(',')})`;
+const wellCSS = (A) => `radial-gradient(circle at 34% 30%,rgba(255,255,255,.28),rgba(255,255,255,0) 24%),radial-gradient(circle at 50% 56%,${cssAt(A, 1.7)} 0%,${cssAt(A, 1.15)} 52%,${cssAt(A, .62)} 82%,${cssAt(A, .3)} 100%)`;
+const sheetCSS = (A) => `linear-gradient(135deg,${cssAt(A, 1.4)} 0%,${cssAt(A, .75)} 45%,${cssAt(A, .3)} 75%,${cssAt(A, .1)} 100%)`;
+
+/* ---------------- WebGL setup ---------------- */
+const cv = $('#cv');
+const gl = cv.getContext('webgl2', { antialias: false, alpha: false, depth: false, stencil: false, premultipliedAlpha: false, preserveDrawingBuffer: false });
+function fatal(msg){ const d = document.createElement('div'); d.className = 'fatal'; d.textContent = msg; $('#sheet').appendChild(d); }
+if (!gl){ fatal('Bu tarayıcı WebGL2 desteklemiyor. Simülasyon için güncel bir Chrome, Edge, Firefox ya da Safari gerekir.'); return; }
+const hasF32 = !!gl.getExtension('EXT_color_buffer_float');
+const hasF16 = hasF32 || !!gl.getExtension('EXT_color_buffer_half_float');
+if (!hasF16){ fatal('Bu cihazın grafik birimi kayan noktalı doku desteklemiyor; simülasyon çalışamıyor.'); return; }
+const FMT = hasF32 ? { i: gl.RGBA32F, t: gl.FLOAT } : { i: gl.RGBA16F, t: gl.HALF_FLOAT };
+const SNAPFMT = { i: gl.RGBA16F, t: gl.HALF_FLOAT };
+
+const ASPECT = 38 / 28;
+const SMALL = Math.min(screen.width, screen.height) < 700 || matchMedia('(pointer: coarse)').matches;
+const SW = SMALL ? 640 : 900, SH = Math.round(SW / ASPECT);
+const PXMM = SW / 380;
+const PW = SW * 2, PH = SH * 2;
+
+const HEAD = `#version 300 es
+precision highp float; precision highp int; precision highp sampler2D;
+`;
+const NOISE = `
+float hash12(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+vec2 hash22(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973)); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.xx + p3.yz) * p3.zy); }
+float vnoise(vec2 p){ vec2 i = floor(p); vec2 f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), u.x), mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), u.x), u.y); }
+`;
+const SIM = `
+uniform ivec2 uRes; uniform sampler2D uPaper; uniform float uPaperLod;
+const float HEPS = 0.0012;
+bool inb(ivec2 p){ return p.x >= 0 && p.y >= 0 && p.x < uRes.x && p.y < uRes.y; }
+vec4 paperAt(ivec2 p){ return textureLod(uPaper, (vec2(p) + 0.5) / vec2(uRes), uPaperLod); }
+`;
+const VS = `#version 300 es
+layout(location = 0) in vec2 aPos; out vec2 vUv;
+void main(){ vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }`;
+
+const FS_PAPER = HEAD + NOISE + `
+uniform vec2 uSize; uniform int uType; uniform float uFreq; uniform float uSeed;
+out vec4 o;
+float fbm(vec2 p){ float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++){ s += a * vnoise(p); p = mat2(1.6, 1.2, -1.2, 1.6) * p + 7.31; a *= 0.5; } return s / 0.97; }
+float worley(vec2 p){ vec2 i = floor(p), f = fract(p); float d = 9.0;
+  for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++){ vec2 g = vec2(float(x), float(y)); vec2 r = g + hash22(i + g + uSeed) - f; d = min(d, dot(r, r)); }
+  return sqrt(d); }
+float fiberL(vec2 p, float ang, float st, float sd){ float c = cos(ang), s = sin(ang); vec2 q = vec2(c * p.x - s * p.y, s * p.x + c * p.y); q.x /= st; float n = vnoise(q + sd); float r = 1.0 - abs(n * 2.0 - 1.0); return pow(r, 12.0); }
+float fibers(vec2 p, float st){ float f = 0.0; for (int k = 0; k < 6; k++){ float fk = float(k); f = max(f, fiberL(p * (1.0 + 0.17 * fk), fk * 1.047 + uSeed, st, fk * 13.7 + uSeed)); } return f; }
+void main(){
+  vec2 px = gl_FragCoord.xy; vec2 p = px / uSize.x * uFreq;
+  vec2 warp = vec2(fbm(p * 0.5 + 3.1), fbm(p * 0.5 + 8.7)) - 0.5;
+  float h; float fib;
+  if (uType == 0){ float w = worley(p * 1.15 + warp * 1.4); h = 0.46 * fbm(p * 0.9 + warp * 1.6) + 0.34 * pow(1.0 - clamp(w, 0.0, 1.0), 1.3) + 0.2 * fbm(p * 4.0); fib = fibers(p * 1.3, 6.0); }
+  else if (uType == 1){ h = 0.5 * fbm(p) + 0.32 * fbm(p * 3.0) + 0.18 * fbm(p * 9.0); fib = fibers(p * 0.9, 8.0); }
+  else if (uType == 2){ float w = worley(p + warp * 1.8); h = 0.5 * pow(1.0 - clamp(w, 0.0, 1.0), 1.2) + 0.32 * fbm(p * 0.7 + warp * 2.0) + 0.18 * fbm(p * 3.5); fib = fibers(p * 1.1, 5.0); }
+  else if (uType == 3){ h = 0.45 * fbm(p * 1.2) + 0.3 * fbm(p * 4.0) + 0.25 * (1.0 - worley(p * 1.5 + warp)); fib = fibers(p * 2.0, 3.0); }
+  else { fib = fibers(p * 0.5, 16.0); h = 0.32 * fbm(p * 0.8) + 0.22 * fbm(p * 3.0) + 0.46 * fib; }
+  float grain = 0.5 * vnoise(px * 0.33 + uSeed * 17.0) + 0.3 * vnoise(px * 0.9 + 4.0) + 0.2 * hash12(px + uSeed * 91.0);
+  vec2 q = px / uSize.x * 26.0;
+  float capn = fbm(q + 2.0 * vec2(fbm(q * 0.7 + 1.7), fbm(q * 0.7 + 9.2)));
+  o = vec4(clamp(h, 0.0, 1.0), clamp(fib, 0.0, 1.0), grain, clamp(capn, 0.0, 1.0));
+}`;
+
+const FS_TOOL = HEAD + NOISE + SIM + `
+uniform sampler2D uW, uSA, uSB, uX;
+uniform int uMode; uniform int uShape;
+uniform vec2 uA, uB, uDir;
+uniform float uR, uTarget, uFlow, uConc, uContact, uDry, uSeed, uStrokeSeed, uAmt, uGrain;
+uniform vec4 uPigA; uniform vec3 uPigB;
+layout(location = 0) out vec4 oW; layout(location = 1) out vec4 oSA; layout(location = 2) out vec4 oSB; layout(location = 3) out vec4 oX;
+float segDist(vec2 p, vec2 a, vec2 b){ vec2 pa = p - a, ba = b - a; float t = clamp(dot(pa, ba) / max(dot(ba, ba), 1e-6), 0.0, 1.0); return length(pa - ba * t); }
+float worley(vec2 p){ vec2 i = floor(p), f = fract(p); float d = 9.0;
+  for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++){ vec2 g = vec2(float(x), float(y)); vec2 r = g + hash22(i + g) - f; d = min(d, dot(r, r)); }
+  return sqrt(d); }
+void main(){
+  ivec2 ip = ivec2(gl_FragCoord.xy); vec2 p = vec2(ip) + 0.5;
+  vec4 w = texelFetch(uW, ip, 0); vec4 sa = texelFetch(uSA, ip, 0); vec4 sb = texelFetch(uSB, ip, 0); vec4 x = texelFetch(uX, ip, 0);
+  oW = w; oSA = sa; oSB = sb; oX = x;
+  float reach = uR * 1.6 + 4.0;
+  vec2 lo = min(uA, uB) - reach, hi = max(uA, uB) + reach;
+  if (p.x < lo.x || p.y < lo.y || p.x > hi.x || p.y > hi.y) return;
+  vec4 pap = paperAt(ip); float ph = pap.r;
+  float d = segDist(p, uA, uB);
+  if (uMode == 4){ // salt grains
+    float cs = uGrain; vec2 cell = floor(p / cs);
+    vec2 c = (cell + 0.22 + 0.56 * hash22(cell + uSeed)) * cs;
+    float inside = 1.0 - smoothstep(uR * 0.55, uR, segDist(c, uA, uB));
+    float present = step(hash12(cell * 1.37 + uSeed * 3.1), uAmt * inside);
+    float rad = cs * (0.17 + 0.17 * hash12(cell + uSeed * 7.0));
+    float g = present * (1.0 - smoothstep(rad * 0.45, rad, length(p - c)));
+    oX.g = max(x.g, g);
+    return;
+  }
+  if (uMode == 8){ // spray droplets
+    float cs = 7.0; vec2 cell = floor(p / cs);
+    vec2 c = (cell + 0.2 + 0.6 * hash22(cell + uSeed)) * cs;
+    float dc = length(c - uB);
+    float inside = exp(-dc * dc / (uR * uR * 0.45));
+    float present = step(hash12(cell * 1.71 + uSeed * 2.3), uAmt * inside);
+    float rad = 0.9 + 2.9 * pow(hash12(cell + uSeed * 5.0), 2.0);
+    float g = present * (1.0 - smoothstep(rad * 0.55, rad, length(p - c)));
+    g *= 1.0 - step(0.5, x.r);
+    oW.x = w.x + g * uTarget;
+    return;
+  }
+  float f;
+  if (uShape == 1){
+    vec2 e = vec2(cos(0.55), sin(0.55)) * uR; float dm = 1e9;
+    for (int i = -4; i <= 4; i++){ vec2 o2 = e * (float(i) / 4.0); dm = min(dm, segDist(p - o2, uA, uB)); }
+    float th = max(1.3, uR * 0.16);
+    f = 1.0 - smoothstep(th * 0.5, th * 1.35, dm);
+  } else {
+    float ang = atan(p.y - uB.y, p.x - uB.x);
+    float rr = uR * (1.0 + 0.09 * (vnoise(vec2(ang * 2.5 + uSeed, uSeed * 0.37)) - 0.5));
+    float soft = uShape == 2 ? 0.5 : (uMode == 5 ? 0.88 : 0.8);
+    f = 1.0 - smoothstep(rr * soft, rr, d);
+  }
+  if (f <= 0.0) return;
+  if (uMode == 5){ oX.r = max(x.r, f); return; }
+  if (uMode == 6){ oX.r = x.r * (1.0 - f); return; }
+  if (uMode == 7){ oX.a = max(x.a, f); return; }
+  if (uMode == 3){ // tissue blot
+    float cr = worley(p / 7.0 + uStrokeSeed);
+    float crumple = smoothstep(0.05, 0.6, cr) * 0.6 + 0.4 * vnoise(p / 3.0 + uStrokeSeed);
+    float k = clamp(f * uAmt * (0.3 + 0.8 * crumple), 0.0, 0.95);
+    oW.x = w.x * (1.0 - k); oW.w = w.w * (1.0 - 0.18 * k);
+    oSA = sa * (1.0 - k * 0.92); oSB = vec4(sb.xyz * (1.0 - k * 0.92), sb.w * (1.0 - k));
+    return;
+  }
+  vec2 perp = vec2(-uDir.y, uDir.x);
+  float across = dot(p, perp);
+  float br = 0.65 * vnoise(vec2(across * 0.45, uStrokeSeed)) + 0.35 * vnoise(vec2(across * 1.6, uStrokeSeed + 11.0));
+  float thr = mix(-0.3, 0.7, uDry);
+  float m = smoothstep(thr - 0.05, thr + 0.05, ph + (br - 0.5) * 0.5 * uDry);
+  float fm = f * m * (1.0 - smoothstep(0.3, 0.7, x.r));
+  float h = w.x;
+  float dh = (uTarget - h) * uFlow * fm;
+  if (dh > 0.0){
+    oW.x = h + dh;
+    if (uMode == 0){ float amt = dh * uConc; oSA += uPigA * amt; oSB.xyz += uPigB * amt; }
+  } else {
+    float k = clamp(-dh / max(h, 1e-5), 0.0, 1.0);
+    oW.x = h * (1.0 - k); oSA *= (1.0 - k); oSB *= (1.0 - k);
+  }
+  if (uMode == 0){ float amt = fm * uConc * uContact; oSA += uPigA * amt; oSB.xyz += uPigB * amt; }
+  if (uMode == 2){ oX.b = min(1.0, x.b + f * uAmt); float k = f * 0.25; oSA *= 1.0 - k; oSB.xyz *= 1.0 - k; }
+}`;
+
+const FS_FLUX = HEAD + SIM + `
+uniform sampler2D uW, uF, uX;
+uniform float uG, uDamp, uElevK, uTension;
+uniform vec2 uTilt; uniform vec4 uAir;
+out vec4 o;
+float headAt(vec2 q, float h, float ph){
+  float air = 0.0;
+  if (uAir.z > 0.0){ vec2 d = q - uAir.xy; air = uAir.z * exp(-dot(d, d) / (uAir.w * uAir.w)); }
+  return h + uElevK * ph + dot(uTilt, q) + air;
+}
+float fluxTo(ivec2 q, float h, float Hc, float fOld){
+  if (!inb(q)) return 0.0;
+  if (texelFetch(uX, q, 0).r > 0.5) return 0.0;
+  vec4 wq = texelFetch(uW, q, 0); vec4 pq = paperAt(q);
+  float fl = max(0.0, fOld * uDamp + uG * (Hc - headAt(vec2(q), wq.x, pq.r)));
+  if (fl <= 0.0) return 0.0;
+  if (wq.x < HEPS){
+    float damp = smoothstep(0.34, 0.82, wq.w + 0.3 * (pq.g - 0.3) + 0.15 * (0.5 - pq.r) + 0.7 * (pq.a - 0.5));
+    float tens = uTension * (0.5 + 0.55 * pq.r + 0.35 * (1.0 - pq.g));
+    float spill = smoothstep(tens, tens * 1.5, h);
+    fl *= max(damp * 0.9, spill);
+  }
+  return fl;
+}
+void main(){
+  ivec2 p = ivec2(gl_FragCoord.xy);
+  vec4 w = texelFetch(uW, p, 0); float h = w.x;
+  if (h < 1e-6 || texelFetch(uX, p, 0).r > 0.5){ o = vec4(0.0); return; }
+  float Hc = headAt(vec2(p), h, paperAt(p).r);
+  vec4 fo = texelFetch(uF, p, 0);
+  vec4 nf = vec4(fluxTo(p + ivec2(-1, 0), h, Hc, fo.x), fluxTo(p + ivec2(1, 0), h, Hc, fo.y),
+                 fluxTo(p + ivec2(0, -1), h, Hc, fo.z), fluxTo(p + ivec2(0, 1), h, Hc, fo.w));
+  float s = nf.x + nf.y + nf.z + nf.w;
+  if (s > h * 0.95) nf *= h * 0.95 / s;
+  o = nf;
+}`;
+
+const FS_TRANS = HEAD + SIM + `
+uniform sampler2D uW, uF, uSA, uSB, uX;
+uniform float uDiff, uSaltDiff, uSaltPush;
+layout(location = 0) out vec4 oW; layout(location = 1) out vec4 oSA; layout(location = 2) out vec4 oSB;
+vec4 gw; vec4 gsa; vec4 gsb; float gfib; vec4 nA; vec4 nB; float nh; vec2 vel;
+void nbr(ivec2 q, int inC, float outF, vec2 dir){
+  if (!inb(q)) return;
+  vec4 wq = texelFetch(uW, q, 0); vec4 fq = texelFetch(uF, q, 0);
+  vec4 saq = texelFetch(uSA, q, 0); vec4 sbq = texelFetch(uSB, q, 0);
+  float inF = inC == 0 ? fq.x : (inC == 1 ? fq.y : (inC == 2 ? fq.z : fq.w));
+  float hq = max(wq.x, 1e-6);
+  nh += inF; nA += saq / hq * inF; nB += sbq / hq * inF;
+  vel += dir * (outF - inF) * 0.5;
+  float h = gw.x; float hp = max(h, 1e-6);
+  if (h > HEPS && wq.x > HEPS){
+    float m = min(h, wq.x);
+    float dk = uDiff * m * smoothstep(0.012, 0.06, m);
+    nA += dk * (saq / hq - gsa / hp);
+    nB.xyz += dk * (sbq.xyz / hq - gsb.xyz / hp);
+  }
+  float mp = h + 0.02 * gw.w, mq = wq.x + 0.02 * wq.w;
+  if (mp > 0.004 && mq > 0.004 && (gsb.w > 1e-5 || sbq.w > 1e-5)){
+    float gate = 0.3 + 0.7 * (gfib + paperAt(q).g);
+    float wm = min(min(mp, mq), 0.02) / 0.02;
+    nB.w += uSaltDiff * gate * wm * (sbq.w - gsb.w);
+    float sp = gsb.w / (mp + 0.03), sq = sbq.w / (mq + 0.03);
+    float ds = clamp((sp - sq) / (sp + sq + 0.05), -1.0, 1.0) * uSaltPush * gate;
+    if (ds > 0.0){ nA -= gsa * ds; nB.xyz -= gsb.xyz * ds; }
+    else { nA -= saq * ds; nB.xyz -= sbq.xyz * ds; }
+  }
+}
+void main(){
+  ivec2 p = ivec2(gl_FragCoord.xy);
+  gw = texelFetch(uW, p, 0); vec4 f = texelFetch(uF, p, 0);
+  gsa = texelFetch(uSA, p, 0); gsb = texelFetch(uSB, p, 0); gfib = paperAt(p).g;
+  float h = gw.x; float hp = max(h, 1e-6);
+  float outF = f.x + f.y + f.z + f.w;
+  nh = h - outF; nA = gsa - gsa / hp * outF; nB = gsb - gsb / hp * outF; vel = vec2(0.0);
+  nbr(p + ivec2(-1, 0), 1, f.x, vec2(-1.0, 0.0));
+  nbr(p + ivec2(1, 0), 0, f.y, vec2(1.0, 0.0));
+  nbr(p + ivec2(0, -1), 3, f.z, vec2(0.0, -1.0));
+  nbr(p + ivec2(0, 1), 2, f.w, vec2(0.0, 1.0));
+  oW = vec4(max(nh, 0.0), vel, gw.w);
+  oSA = max(nA, vec4(0.0)); oSB = max(nB, vec4(0.0));
+}`;
+
+const FS_PAPERSTEP = (passA) => HEAD + (passA ? '#define PASS_A\n' : '') + SIM + `
+uniform sampler2D uW, uSA, uSB, uDA, uDB, uX;
+uniform float uAbs, uCap, uEvap, uEvapS, uEdgeEvap, uHeatK, uDep, uGranDep, uDes, uLift, uCapD, uSaltDis, uBoost;
+#ifdef PASS_A
+layout(location = 0) out vec4 oW; layout(location = 1) out vec4 oSA; layout(location = 2) out vec4 oSB;
+#else
+layout(location = 0) out vec4 oDA; layout(location = 1) out vec4 oDB; layout(location = 2) out vec4 oX;
+#endif
+void main(){
+  ivec2 p = ivec2(gl_FragCoord.xy);
+  vec4 w = texelFetch(uW, p, 0), sa = texelFetch(uSA, p, 0), sb = texelFetch(uSB, p, 0);
+  vec4 da = texelFetch(uDA, p, 0), db = texelFetch(uDB, p, 0), x = texelFetch(uX, p, 0);
+  vec4 pap = paperAt(p); float ph = pap.r, fib = pap.g;
+  float h = w.x, s = w.w;
+  float dryN = 0.0, cap = 0.0;
+  ivec2 offs[4] = ivec2[4](ivec2(-1, 0), ivec2(1, 0), ivec2(0, -1), ivec2(0, 1));
+  for (int i = 0; i < 4; i++){
+    ivec2 q = p + offs[i]; if (!inb(q)) continue;
+    vec4 wq = texelFetch(uW, q, 0);
+    if (wq.x < HEPS && wq.w < 0.45) dryN += 1.0;
+    cap += (wq.w - s) * (0.3 + 0.7 * (fib + paperAt(q).g));
+  }
+  float evm = uBoost * (1.0 + uHeatK * x.a);
+  float moistOK = (h > HEPS * 0.5 || s > 0.2) ? 1.0 : 0.0;
+  float dissolve = moistOK * min(max(x.g - 0.22, 0.0), uSaltDis * (0.25 + min(h, 0.06) * 12.0));
+  float drink = min(h, 0.0006 * x.g * moistOK);
+  float absorb = max(0.0, min(h - drink, uAbs * (1.0 - s) * (0.6 + 0.8 * fib)));
+  float nh = h - drink - absorb;
+  float ns = s + absorb / uCap;
+  float salt = sb.w / (h + 0.02 * s + 0.012);
+  float saltK = min(salt, 1.0);
+  float edge = (h > HEPS) ? dryN * 0.25 : 0.0;
+  nh = max(0.0, nh - uEvap * evm * (1.0 + uEdgeEvap * edge));
+  if (nh < HEPS) ns -= uEvapS * evm * (0.75 + 0.5 * fib) / (1.0 + 2.5 * saltK);
+  ns = clamp(ns + uCapD * cap, 0.0, 1.0);
+  float sm = max(sb.x, 1e-6);
+  float gAvg = clamp(sb.y / sm, 0.0, 1.0);
+  float depRate = uDep * (1.0 + 1.5 * gAvg) * max(0.15, 1.0 + uGranDep * gAvg * (0.5 - ph) * 2.0) * (0.015 / (nh + 0.015));
+  if (nh < HEPS) depRate = 0.35 / (1.0 + 30.0 * saltK);
+  depRate = clamp(depRate / (1.0 + 4.0 * x.b), 0.0, 1.0);
+  float dm = max(db.x, 1e-6);
+  float dStain = clamp(db.z / dm, 0.0, 1.0);
+  float setM = clamp(db.w, 0.0, db.x);
+  float unsetM = db.x - setM;
+  float wetF = h > HEPS ? h / (h + 0.02) : 0.45 * saltK * smoothstep(0.25, 0.6, s);
+  wetF = max(wetF, 0.5 * smoothstep(0.3, 0.8, s) * min(x.b, 1.0));
+  float base = uDes * uLift * pow(1.0 - dStain, 1.5) * wetF * (1.0 + 6.0 * x.b) * (1.0 + 5.0 * saltK) * (0.7 + 0.6 * ph);
+  float rSet = base * (0.0045 + 0.9 * x.b + 0.08 * saltK);
+  float desSalt = 0.02 * saltK * smoothstep(0.15, 0.45, s) * (1.0 - 0.6 * dStain);
+  float desRate = clamp((unsetM * (base + desSalt) + setM * rSet) / dm, 0.0, 0.5);
+  vec4 depA = sa * depRate; vec3 depB = sb.xyz * depRate;
+  vec4 desA = da * desRate; vec3 desB = db.xyz * desRate;
+#ifdef PASS_A
+  oW = vec4(nh, w.y, w.z, ns);
+  oSA = max(sa - depA + desA, vec4(0.0));
+  oSB = vec4(max(sb.xyz - depB + desB, vec3(0.0)), sb.w * 0.9996 + dissolve);
+#else
+  oDA = max(da + depA - desA, vec4(0.0));
+  float newM = max(db.x + depB.x - desB.x, 0.0);
+  float newSet = setM * (1.0 - min(rSet, 1.0));
+  if (nh < HEPS && ns < 0.3) newSet += (newM - newSet) * 0.04;
+  oDB = vec4(max(db.xyz + depB - desB, vec3(0.0)), clamp(newSet, 0.0, newM));
+  oX = vec4(x.r, max(x.g - dissolve, 0.0), x.b * 0.93, x.a * 0.965);
+#endif
+}`;
+
+const FS_DISPLAY = HEAD + NOISE + `
+uniform sampler2D uW, uSA, uSB, uDA, uDB, uX, uHi;
+uniform vec3 uTone; uniform float uAmp; uniform vec2 uSimRes; uniform vec2 uView; uniform float uGranVis; uniform float uFiberVis;
+in vec2 vUv; out vec4 o;
+const float HEPS = 0.0012;
+vec4 bil(sampler2D t, vec2 uv){
+  vec2 st = uv * uSimRes - 0.5; vec2 i = floor(st); vec2 f = st - i; ivec2 ii = ivec2(i); ivec2 mx = ivec2(uSimRes) - 1;
+  vec4 a = texelFetch(t, clamp(ii, ivec2(0), mx), 0), b = texelFetch(t, clamp(ii + ivec2(1, 0), ivec2(0), mx), 0);
+  vec4 c = texelFetch(t, clamp(ii + ivec2(0, 1), ivec2(0), mx), 0), d = texelFetch(t, clamp(ii + ivec2(1, 1), ivec2(0), mx), 0);
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+vec3 km(vec3 K, float S, vec3 Rg){
+  S = max(S, 1e-4);
+  vec3 a = 1.0 + K / S; vec3 b = sqrt(max(a * a - 1.0, vec3(1e-8))); vec3 x = b * S;
+  vec3 bc = mix(b / tanh(clamp(x, vec3(1e-4), vec3(15.0))), (1.0 / S) * (1.0 + x * x / 3.0), step(x, vec3(0.02)));
+  return clamp((1.0 - Rg * (a - bc)) / (a - Rg + bc), 0.0, 1.0);
+}
+vec3 l2s(vec3 c){ c = clamp(c, 0.0, 1.0); return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(vec3(0.0031308), c)); }
+void main(){
+  vec2 uv = vUv;
+  vec4 w = bil(uW, uv), sa = bil(uSA, uv), sb = bil(uSB, uv), da = bil(uDA, uv), db = bil(uDB, uv), xx = bil(uX, uv);
+  vec2 tx = 1.0 / uView;
+  vec4 hp = texture(uHi, uv);
+  float hL = texture(uHi, uv - vec2(tx.x, 0.0)).r, hR = texture(uHi, uv + vec2(tx.x, 0.0)).r;
+  float hD = texture(uHi, uv - vec2(0.0, tx.y)).r, hU = texture(uHi, uv + vec2(0.0, tx.y)).r;
+  vec3 n = normalize(vec3((hL - hR) * uAmp, (hD - hU) * uAmp, 1.0));
+  vec3 L = normalize(vec3(-0.45, 0.55, 0.7));
+  float diff = dot(n, L) / L.z;
+  float shade = mix(1.0, diff, 0.42);
+  float gAvg = clamp(db.y / max(db.x, 1e-5), 0.0, 1.0);
+  float gmod = 1.0 + uGranVis * gAvg * ((0.5 - hp.r) * 0.55 + (hp.b - 0.5) * 1.1);
+  gmod = clamp(gmod, 0.25, 2.2) * (1.0 + 0.12 * (0.5 - hp.r));
+  vec3 K = da.rgb * gmod + sa.rgb;
+  float S = da.a * gmod + sa.a;
+  vec3 Rg = uTone * (1.0 + uFiberVis * (hp.g - 0.25));
+  vec3 col = km(K, S, Rg);
+  float wet = smoothstep(HEPS, HEPS * 14.0, w.x);
+  float damp = clamp(w.w, 0.0, 1.0);
+  col *= 1.0 - 0.07 * damp - 0.05 * wet;
+  col = pow(col, vec3(1.0 + 0.17 * max(wet, damp * 0.75)));
+  col *= shade;
+  vec2 st = 1.0 / uSimRes;
+  float wl = bil(uW, uv - vec2(st.x, 0.0)).x, wr = bil(uW, uv + vec2(st.x, 0.0)).x;
+  float wd = bil(uW, uv - vec2(0.0, st.y)).x, wu = bil(uW, uv + vec2(0.0, st.y)).x;
+  vec3 nw = normalize(vec3((wl - wr) * 16.0, (wd - wu) * 16.0, 1.0));
+  float thin = 1.0 - smoothstep(0.006, 0.07, w.x);
+  vec3 ns = normalize(mix(nw, n, thin * 0.85));
+  vec3 Hv = normalize(L + vec3(0.0, 0.0, 1.0));
+  float nh = max(dot(ns, Hv), 0.0);
+  float spec = pow(nh, 80.0) * 0.85 + pow(nh, 10.0) * 0.06;
+  col += spec * wet * vec3(0.95, 0.97, 1.0);
+  float mk = smoothstep(0.2, 0.6, xx.r);
+  if (mk > 0.0){
+    vec3 mcol = vec3(0.79, 0.73, 0.47) * mix(1.0, diff, 0.8);
+    float ms = pow(max(dot(n, Hv), 0.0), 26.0) * 0.22;
+    col = mix(col, mcol + ms, mk * 0.72);
+  }
+  float cr = smoothstep(0.1, 0.42, xx.g);
+  if (cr > 0.0){
+    float sp = hash12(floor(uv * uView / 1.5));
+    vec3 ccol = vec3(0.88, 0.89, 0.9) * mix(1.0, diff, 0.9) + step(0.84, sp) * 0.3;
+    col = mix(col, ccol, cr * 0.88);
+  }
+  o = vec4(l2s(col), 1.0);
+}`;
+
+const FS_REDUCE = HEAD + SIM + `
+uniform sampler2D uW, uX; uniform ivec2 uBlock; out vec4 o;
+void main(){
+  ivec2 b = ivec2(gl_FragCoord.xy) * uBlock; float mh = 0.0, ms = 0.0, wc = 0.0, n = 0.0, ht = 0.0;
+  for (int y = 0; y < 64; y += 2){ if (y >= uBlock.y) break;
+    for (int x = 0; x < 64; x += 2){ if (x >= uBlock.x) break;
+      ivec2 q = b + ivec2(x, y); if (q.x >= uRes.x || q.y >= uRes.y) continue;
+      vec4 w = texelFetch(uW, q, 0); mh = max(mh, w.x); ms = max(ms, w.w);
+      wc += (w.x > HEPS || w.w > 0.15) ? 1.0 : 0.0; n += 1.0; ht = max(ht, texelFetch(uX, q, 0).a); } }
+  o = vec4(mh, ms, wc / max(n, 1.0), ht);
+}`;
+const FS_COPY = HEAD + `
+uniform sampler2D u0, u1, u2, u3;
+layout(location = 0) out vec4 o0; layout(location = 1) out vec4 o1; layout(location = 2) out vec4 o2; layout(location = 3) out vec4 o3;
+void main(){ ivec2 p = ivec2(gl_FragCoord.xy); o0 = texelFetch(u0, p, 0); o1 = texelFetch(u1, p, 0); o2 = texelFetch(u2, p, 0); o3 = texelFetch(u3, p, 0); }`;
+const FS_MUL = HEAD + `
+uniform sampler2D uX; uniform vec4 uMul; out vec4 o;
+void main(){ o = texelFetch(uX, ivec2(gl_FragCoord.xy), 0) * uMul; }`;
+
+function compile(type, src){
+  const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)){ const log = gl.getShaderInfoLog(s); console.error(log, src.split('\n').map((l, i) => (i + 1) + ': ' + l).join('\n')); throw new Error(log); }
+  return s;
+}
+function program(fs){
+  const p = gl.createProgram();
+  gl.attachShader(p, compile(gl.VERTEX_SHADER, VS)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+  gl.bindAttribLocation(p, 0, 'aPos'); gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const info = {}; const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < n; i++){ const a = gl.getActiveUniform(p, i); info[a.name.replace(/\[0\]$/, '')] = { loc: gl.getUniformLocation(p, a.name), type: a.type }; }
+  return { p, info };
+}
+let P;
+try {
+  P = { paper: program(FS_PAPER), tool: program(FS_TOOL), flux: program(FS_FLUX), trans: program(FS_TRANS),
+        papA: program(FS_PAPERSTEP(true)), papB: program(FS_PAPERSTEP(false)), disp: program(FS_DISPLAY),
+        reduce: program(FS_REDUCE), copy: program(FS_COPY), mul: program(FS_MUL) };
+} catch (e){ fatal('Grafik gölgelendiricileri derlenemedi: ' + e.message); return; }
+
+const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+const vbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+const fbo = gl.createFramebuffer();
+const DRAWBUF = [gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1, gl.COLOR_ATTACHMENT2, gl.COLOR_ATTACHMENT3];
+
+function tex(w, h, fmt, filter){
+  const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texStorage2D(gl.TEXTURE_2D, 1, fmt.i, w, h);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter || gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter || gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  return t;
+}
+class Field { constructor(){ this.r = tex(SW, SH, FMT); this.w = tex(SW, SH, FMT); } swap(){ const t = this.r; this.r = this.w; this.w = t; } }
+const W = new Field(), F = new Field(), SA = new Field(), SB = new Field(), DA = new Field(), DB = new Field(), X = new Field();
+const FIELDS = [W, F, SA, SB, DA, DB, X];
+const PLEV = Math.floor(Math.log2(Math.max(PW, PH))) + 1;
+const paperTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, paperTex);
+gl.texStorage2D(gl.TEXTURE_2D, PLEV, gl.RGBA8, PW, PH);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+const RW = 32, RH = 24;
+const redTex = tex(RW, RH, FMT);
+const PAPERLOD = Math.log2(PW / SW);
+
+function setU(p, name, v){
+  const u = p.info[name]; if (!u) return;
+  switch (u.type){
+    case gl.FLOAT: gl.uniform1f(u.loc, v); break;
+    case gl.FLOAT_VEC2: gl.uniform2fv(u.loc, v); break;
+    case gl.FLOAT_VEC3: gl.uniform3fv(u.loc, v); break;
+    case gl.FLOAT_VEC4: gl.uniform4fv(u.loc, v); break;
+    case gl.INT_VEC2: gl.uniform2iv(u.loc, v); break;
+    default: gl.uniform1i(u.loc, v);
+  }
+}
+let lastUnits = 0;
+function run(p, texs, unis, targets, vw, vh){
+  gl.useProgram(p.p);
+  let unit = 0;
+  for (const k in texs){ gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, texs[k]); setU(p, k, unit); unit++; }
+  for (let u = unit; u < lastUnits; u++){ gl.activeTexture(gl.TEXTURE0 + u); gl.bindTexture(gl.TEXTURE_2D, null); }
+  lastUnits = unit;
+  setU(p, 'uRes', [SW, SH]); setU(p, 'uPaperLod', PAPERLOD);
+  for (const k in unis) setU(p, k, unis[k]);
+  if (targets){
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    for (let i = 0; i < 4; i++) gl.framebufferTexture2D(gl.FRAMEBUFFER, DRAWBUF[i], gl.TEXTURE_2D, targets[i] || null, 0);
+    gl.drawBuffers(DRAWBUF.slice(0, targets.length));
+    gl.viewport(0, 0, vw || SW, vh || SH);
+  } else { gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, cv.width, cv.height); }
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+function clearTex(t){
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+  for (let i = 1; i < 4; i++) gl.framebufferTexture2D(gl.FRAMEBUFFER, DRAWBUF[i], gl.TEXTURE_2D, null, 0);
+  gl.drawBuffers([gl.COLOR_ATTACHMENT0]); gl.clearBufferfv(gl.COLOR, 0, [0, 0, 0, 0]);
+}
+function clearAll(){ for (const f of FIELDS){ clearTex(f.r); clearTex(f.w); } }
+
+/* ---------------- State ---------------- */
+const saved = store.get('suluboya.v1', {});
+const state = {
+  tool: 'brush', shape: 'round', sizeMm: 14, water: 0.75, cons: 2, salt: 'coarse',
+  humidity: 55, speed: 1, tilt: [0, 0],
+  paperId: PAPERS.some((p) => p.id === saved.paperId) ? saved.paperId : 'cp300',
+  custom: Array.isArray(saved.custom) ? saved.custom : [],
+  paletteId: saved.paletteId || 'land',
+  mix: [{ id: 'pb29', r: 1 }], selWell: -1, mixMode: false,
+};
+let paper = PAPERS.find((p) => p.id === state.paperId);
+toneLin = hexLin(paper.tone);
+let boost = 1, fastDry = false, painted = false;
+let airNow = [0, 0, 0, 1];
+let awake = 300;
+let red = { maxH: 0, maxS: 0, wet: 0, heat: 0 };
+const persist = () => store.set('suluboya.v1', { paperId: state.paperId, custom: state.custom, paletteId: state.paletteId });
+
+/* ---------------- Paper ---------------- */
+function genPaper(){
+  const pp = paper.p;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, paperTex, 0);
+  for (let i = 1; i < 4; i++) gl.framebufferTexture2D(gl.FRAMEBUFFER, DRAWBUF[i], gl.TEXTURE_2D, null, 0);
+  gl.drawBuffers([gl.COLOR_ATTACHMENT0]); gl.viewport(0, 0, PW, PH);
+  gl.useProgram(P.paper.p);
+  setU(P.paper, 'uSize', [PW, PH]); setU(P.paper, 'uType', pp.type); setU(P.paper, 'uFreq', pp.freq); setU(P.paper, 'uSeed', Math.random() * 40);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.bindTexture(gl.TEXTURE_2D, paperTex); gl.generateMipmap(gl.TEXTURE_2D);
+  toneLin = hexLin(paper.tone);
+  $('#sheet').style.background = paper.tone;
+}
+
+/* ---------------- Simulation passes ---------------- */
+function toolPass(u){
+  run(P.tool, { uW: W.r, uSA: SA.r, uSB: SB.r, uX: X.r, uPaper: paperTex }, u, [W.w, SA.w, SB.w, X.w]);
+  W.swap(); SA.swap(); SB.swap(); X.swap();
+}
+function simStep(){
+  const pp = paper.p;
+  const humF = clamp((1 - state.humidity / 100) / 0.45, 0.12, 2.2);
+  run(P.flux, { uW: W.r, uF: F.r, uX: X.r, uPaper: paperTex },
+      { uG: 0.22, uDamp: 0.82, uElevK: 0.012 * pp.amp, uTension: pp.tension, uTilt: tiltHead(), uAir: airNow }, [F.w]);
+  F.swap();
+  run(P.trans, { uW: W.r, uF: F.r, uSA: SA.r, uSB: SB.r, uX: X.r, uPaper: paperTex },
+      { uDiff: 0.1, uSaltDiff: 0.06, uSaltPush: 0.06 }, [W.w, SA.w, SB.w]);
+  W.swap(); SA.swap(); SB.swap();
+  const texs = { uW: W.r, uSA: SA.r, uSB: SB.r, uDA: DA.r, uDB: DB.r, uX: X.r, uPaper: paperTex };
+  const U = { uAbs: pp.absorb, uCap: pp.cap, uEvap: 0.000035 * humF * pp.evap, uEvapS: 0.0004 * humF * pp.evap, uEdgeEvap: 3.0, uHeatK: 16,
+              uDep: 0.012, uGranDep: 0.45 * pp.granVis, uDes: 0.02, uLift: pp.lift, uCapD: pp.capD, uSaltDis: 0.006, uBoost: boost };
+  run(P.papA, texs, U, [W.w, SA.w, SB.w]);
+  run(P.papB, texs, U, [DA.w, DB.w, X.w]);
+  W.swap(); SA.swap(); SB.swap(); DA.swap(); DB.swap(); X.swap();
+}
+function tiltHead(){ const [tx, ty] = state.tilt; const mag = Math.hypot(tx, ty); if (mag < 1e-3) return [0, 0];
+  const k = Math.sin(mag * 30 * Math.PI / 180) * 0.0016 * (900 / SW); return [-k * tx / mag, k * ty / mag]; }
+function render(){
+  run(P.disp, { uW: W.r, uSA: SA.r, uSB: SB.r, uDA: DA.r, uDB: DB.r, uX: X.r, uHi: paperTex },
+      { uTone: toneLin, uAmp: 1.15 * paper.p.amp * Math.sqrt(PW / Math.max(cv.width, 1)), uSimRes: [SW, SH], uView: [cv.width, cv.height], uGranVis: 0.75 * paper.p.granVis, uFiberVis: paper.p.fiberVis }, null);
+}
+const redBuf = new Float32Array(RW * RH * 4);
+function reduce(){
+  run(P.reduce, { uW: W.r, uX: X.r }, { uBlock: [Math.ceil(SW / RW), Math.ceil(SH / RH)] }, [redTex], RW, RH);
+  gl.readBuffer(gl.COLOR_ATTACHMENT0);
+  gl.readPixels(0, 0, RW, RH, gl.RGBA, gl.FLOAT, redBuf);
+  if (gl.getError() !== gl.NO_ERROR){ red = { maxH: 1, maxS: 1, wet: 0.5, heat: 0 }; return; }
+  let mh = 0, ms = 0, wc = 0, ht = 0;
+  for (let i = 0; i < RW * RH; i++){ mh = Math.max(mh, redBuf[i * 4]); ms = Math.max(ms, redBuf[i * 4 + 1]); wc += redBuf[i * 4 + 2]; ht = Math.max(ht, redBuf[i * 4 + 3]); }
+  red = { maxH: mh, maxS: ms, wet: wc / (RW * RH), heat: ht };
+}
+const probeBuf = new Float32Array(4);
+function probe(sx, sy){
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, W.r, 0);
+  for (let i = 1; i < 4; i++) gl.framebufferTexture2D(gl.FRAMEBUFFER, DRAWBUF[i], gl.TEXTURE_2D, null, 0);
+  gl.readBuffer(gl.COLOR_ATTACHMENT0);
+  gl.readPixels(clamp(sx | 0, 0, SW - 1), clamp(sy | 0, 0, SH - 1), 1, 1, gl.RGBA, gl.FLOAT, probeBuf);
+  if (gl.getError() !== gl.NO_ERROR) return null;
+  return { h: probeBuf[0], s: probeBuf[3] };
+}
+function mulX(m){ run(P.mul, { uX: X.r }, { uMul: m }, [X.w]); X.swap(); }
+
+/* undo snapshots */
+const UNDO_MAX = SMALL ? 3 : 4;
+const snapPool = []; const undoStack = [];
+function pushUndo(){
+  let s = undoStack.length >= UNDO_MAX ? undoStack.shift() : (snapPool.pop() || Array.from({ length: 6 }, () => tex(SW, SH, SNAPFMT)));
+  run(P.copy, { u0: W.r, u1: SA.r, u2: SB.r, u3: DA.r }, {}, [s[0], s[1], s[2], s[3]]);
+  run(P.copy, { u0: DB.r, u1: X.r, u2: DB.r, u3: X.r }, {}, [s[4], s[5]]);
+  undoStack.push(s); $('#undoBtn').disabled = false;
+}
+function undo(){
+  const s = undoStack.pop(); if (!s) return;
+  run(P.copy, { u0: s[0], u1: s[1], u2: s[2], u3: s[3] }, {}, [W.r, SA.r, SB.r, DA.r]);
+  run(P.copy, { u0: s[4], u1: s[5], u2: s[4], u3: s[5] }, {}, [DB.r, X.r]);
+  clearTex(F.r); clearTex(F.w);
+  snapPool.push(s); $('#undoBtn').disabled = !undoStack.length; wake(); dirty = true;
+}
+
+/* ---------------- Strokes ---------------- */
+function brushCfg(tool, o = {}){
+  const mix = o.mix || state.mix; const v = mixVec(mix);
+  return { tool, shape: o.shape || state.shape, sizeMm: o.sizeMm || state.sizeMm, V: o.water ?? state.water,
+           C: o.C ?? CONS[state.cons].c, pigA: v.A, pigB: v.B, salt: o.salt || state.salt };
+}
+function newStroke(cfg, p, pm){ return { cfg, last: p, cur: p, queue: [], V: cfg.V, sseed: Math.random() * 500, dir: [1, 0], frame: 0, lastSalt: null, pm: pm || 1 }; }
+const Z4 = [0, 0, 0, 0], Z3 = [0, 0, 0];
+function seg(st, a, b, dwell){
+  const c = st.cfg; const len = dist(a, b);
+  if (len > 0.5) st.dir = [(b[0] - a[0]) / len, (b[1] - a[1]) / len];
+  const r = c.sizeMm * 0.5 * PXMM * st.pm;
+  const shapeI = c.shape === 'flat' ? 1 : (c.shape === 'mop' ? 2 : 0);
+  const u = { uA: a, uB: b, uR: r, uDir: st.dir, uSeed: Math.random() * 100, uStrokeSeed: st.sseed, uShape: shapeI, uConc: 0, uContact: 0, uDry: 0,
+              uAmt: 0, uGrain: 3, uTarget: 0, uFlow: 0, uPigA: Z4, uPigB: Z3, uMode: 0 };
+  switch (c.tool){
+    case 'brush': case 'water': {
+      const V = st.V; const tf = shapeI === 2 ? 0.26 : (shapeI === 1 ? 0.18 : 0.21);
+      const dry = smooth(0.42, 0.05, V);
+      Object.assign(u, { uMode: c.tool === 'brush' ? 0 : 1, uTarget: Math.max(0.004, V * tf), uFlow: (shapeI === 2 ? 0.75 : 0.8) * (dwell ? 0.25 : 1),
+                         uConc: c.C, uContact: 0.004 + 0.07 * dry, uDry: dry, uPigA: c.pigA, uPigB: c.pigB });
+      toolPass(u);
+      const k = shapeI === 2 ? 1.5e-5 : (shapeI === 1 ? 6e-5 : 4.5e-5);
+      st.V = Math.max(0, V - (len + (dwell ? 0.06 * r : 0)) * r * k * (0.5 + V));
+      break; }
+    case 'lift': Object.assign(u, { uMode: 2, uShape: 0, uTarget: 0.05, uFlow: 0.5 * (dwell ? 0.4 : 1), uAmt: 0.35 }); toolPass(u); break;
+    case 'blot': Object.assign(u, { uMode: 3, uShape: 0, uR: r * 1.2, uAmt: dwell ? 0.1 : 0.5 }); toolPass(u); break;
+    case 'mask': Object.assign(u, { uMode: 5, uShape: 0 }); toolPass(u); break;
+    case 'unmask': Object.assign(u, { uMode: 6, uShape: 0 }); toolPass(u); break;
+  }
+}
+function strokeTick(st){
+  const t = st.cfg.tool; st.frame++;
+  const r = st.cfg.sizeMm * 0.5 * PXMM;
+  if (t === 'spray'){ toolPass({ uMode: 8, uA: st.cur, uB: st.cur, uR: r * 1.3, uSeed: Math.random() * 1000, uAmt: 0.07, uTarget: 0.24 }); return; }
+  if (t === 'dryer'){ toolPass({ uMode: 7, uA: st.cur, uB: st.cur, uR: r * 1.3, uShape: 2, uSeed: 1, uDir: [1, 0] }); airNow = [st.cur[0], st.cur[1], 0.05, r * 1.1]; return; }
+  if (t === 'salt'){
+    if (!st.lastSalt || dist(st.cur, st.lastSalt) > r * 0.45 || st.frame % 12 === 0){
+      const coarse = st.cfg.salt === 'coarse';
+      toolPass({ uMode: 4, uA: st.cur, uB: st.cur, uR: r, uSeed: Math.random() * 1000, uAmt: coarse ? 0.55 : 0.75, uGrain: coarse ? Math.max(2.5, 2.6 * PXMM) : Math.max(1.6, 1.1 * PXMM) });
+      st.lastSalt = st.cur;
+    }
+    return;
+  }
+  const pts = st.queue.splice(0);
+  if (!pts.length){ if (t === 'brush' || t === 'water' || t === 'lift' || t === 'blot') seg(st, st.last, st.last, true); return; }
+  let prev = st.last; const n = pts.length; const stride = Math.ceil(n / 10);
+  for (let i = stride - 1; i < n; i += stride){ const q = pts[i]; if (dist(prev, q) < 0.35) continue; seg(st, prev, q, false); prev = q; }
+  const lp = pts[n - 1]; if (dist(prev, lp) >= 0.35){ seg(st, prev, lp, false); prev = lp; }
+  st.last = prev;
+}
+function strokeStart(st){
+  const t = st.cfg.tool;
+  if (['brush', 'water', 'lift', 'blot', 'mask', 'unmask'].includes(t)) seg(st, st.cur, st.cur, false);
+  else strokeTick(st);
+}
+
+/* ---------------- Pointer input ---------------- */
+let user = null; let dirty = true; let pointerOver = false; let cursorSim = null;
+function toSim(e){ const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * SW, (1 - (e.clientY - r.top) / r.height) * SH]; }
+cv.addEventListener('pointerdown', (e) => {
+  if (e.button !== 0 && e.pointerType === 'mouse') return;
+  e.preventDefault(); cv.setPointerCapture(e.pointerId);
+  stopDemo(true);
+  pushUndo(); painted = true;
+  const p = toSim(e);
+  const pm = e.pointerType === 'pen' ? clamp(0.3 + 1.4 * (e.pressure || 0.5), 0.25, 1.7) : 1;
+  user = newStroke(brushCfg(state.tool), p, pm); user.id = e.pointerId;
+  strokeStart(user); wake(); dirty = true; cursorSim = p; moveCursor(e);
+});
+cv.addEventListener('pointermove', (e) => {
+  pointerOver = true; cursorSim = toSim(e); moveCursor(e);
+  if (!user || e.pointerId !== user.id) return;
+  const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+  for (const ev of (evs.length ? evs : [e])) user.queue.push(toSim(ev));
+  user.cur = toSim(e);
+  if (e.pointerType === 'pen') user.pm = clamp(0.3 + 1.4 * (e.pressure || 0.5), 0.25, 1.7);
+});
+const endStroke = (e) => { if (user && (!e || e.pointerId === user.id)){ strokeTick(user); user = null; airNow = [0, 0, 0, 1]; refreshRes(); } };
+cv.addEventListener('pointerup', endStroke); cv.addEventListener('pointercancel', endStroke);
+cv.addEventListener('pointerleave', (e) => { if (e.pointerType !== 'touch' && !user){ pointerOver = false; $('#cursor').hidden = true; } });
+cv.addEventListener('pointerenter', (e) => { pointerOver = true; if (e.pointerType !== 'touch') $('#cursor').hidden = false; });
+function cursorRadiusCss(){
+  const r = cv.clientWidth / SW; const mm = state.sizeMm * 0.5 * PXMM;
+  const f = { salt: 1, spray: 1.3, dryer: 1.3, blot: 1.2 }[state.tool] || 1;
+  return Math.max(3, mm * f * r);
+}
+function moveCursor(e){
+  const c = $('#cursor'); if (e.pointerType === 'touch'){ c.hidden = true; return; }
+  const r = cv.getBoundingClientRect();
+  c.style.left = (e.clientX - r.left) + 'px'; c.style.top = (e.clientY - r.top) + 'px';
+  const d = cursorRadiusCss() * 2; c.style.width = d + 'px'; c.style.height = d + 'px';
+  c.classList.toggle('dashed', ['salt', 'spray', 'dryer'].includes(state.tool));
+  c.hidden = false;
+}
+
+/* ---------------- Demo painting ---------------- */
+const uv2s = (u, v) => [u * SW, (1 - v) * SH];
+function hline(u0, u1, v, amp, n, ph = 0){ const pts = []; for (let i = 0; i <= n; i++){ const t = i / n; const u = u0 + (u1 - u0) * t; pts.push(uv2s(u, v + amp * Math.sin(t * 9 + ph + u * 4))); } return pts; }
+function demoScript(){
+  const T = [];
+  const B = (mix, o) => brushCfg('brush', Object.assign({ mix }, o));
+  const zig = (top, bottom, u0, u1, step) => { const pts = []; let down = true;
+    for (let u = u0; u <= u1 + 1e-6; u += step){ const a = top(u) + 0.008, b = bottom; pts.push(uv2s(u, down ? a : b), uv2s(u + step * 0.5, down ? b : a)); down = !down; } return pts; };
+  // 1. pre-wet the sky, then charge it wet-in-wet
+  const wat = brushCfg('water', { shape: 'mop', sizeMm: 32, water: 0.8 });
+  for (let i = 0; i < 6; i++){ const v = 0.04 + i * 0.072; T.push({ cfg: wat, pts: hline(i % 2 ? 0.99 : 0.01, i % 2 ? 0.01 : 0.99, v, 0.004, 20, i), per: 5 }); }
+  T.push({ cfg: B([{ id: 'pb29', r: 1 }], { shape: 'mop', sizeMm: 24, water: 0.8, C: 3.2 }), pts: hline(0.01, 0.99, 0.05, 0.015, 22, 3), per: 5 });
+  T.push({ cfg: B([{ id: 'pb29', r: 1 }], { shape: 'mop', sizeMm: 20, water: 0.75, C: 2.6 }), pts: hline(0.99, 0.4, 0.11, 0.012, 16, 4), per: 5 });
+  T.push({ cfg: B([{ id: 'pb35', r: 1 }], { shape: 'mop', sizeMm: 22, water: 0.8, C: 2.2 }), pts: hline(0.01, 0.99, 0.18, 0.014, 22, 1), per: 5 });
+  T.push({ cfg: B([{ id: 'pv19', r: 1 }], { shape: 'round', sizeMm: 16, water: 0.75, C: 1.0 }), pts: hline(0.04, 0.6, 0.31, 0.01, 14, 5), per: 5 });
+  T.push({ cfg: B([{ id: 'py150', r: 1 }], { shape: 'round', sizeMm: 16, water: 0.75, C: 1.3 }), pts: hline(0.45, 0.97, 0.35, 0.008, 14, 6), per: 5 });
+  // 2. lift clouds with a crumpled tissue once the flood settles
+  T.push({ wait: 20, boost: 10 });
+  const blot = brushCfg('blot', { sizeMm: 24 });
+  for (const [u, v] of [[0.18, 0.13], [0.25, 0.16], [0.31, 0.13], [0.6, 0.09], [0.67, 0.12]]) T.push({ cfg: blot, pts: [uv2s(u, v), uv2s(u + 0.015, v + 0.004)], per: 2 });
+  // 3. let the shine go (as with a hair dryer), then salt the damp sky
+  T.push({ wait: 40, boost: 10 });
+  const salt = brushCfg('salt', { sizeMm: 22, salt: 'coarse' });
+  T.push({ salt: [0.84, 0.07], cfg: salt }, { salt: [0.92, 0.16], cfg: salt }, { salt: [0.78, 0.2], cfg: salt });
+  T.push({ wait: 50, boost: 4 }, { wait: 40, boost: 40 });
+  // 4. distant mountains, wet on dry: crisp ridge, granulating violet
+  const ridge = (u) => 0.5 - 0.1 * Math.max(0, 1 - Math.abs(u - 0.28) / 0.2) - 0.07 * Math.max(0, 1 - Math.abs(u - 0.7) / 0.16) - 0.012 * Math.sin(u * 31);
+  const mtn = B([{ id: 'pv15', r: 5 }, { id: 'pb29', r: 2 }, { id: 'pr233', r: 1 }], { shape: 'round', sizeMm: 12, water: 0.65, C: 2.4 });
+  const rp = []; for (let i = 0; i <= 36; i++){ const u = i / 36; rp.push(uv2s(u, ridge(u) + 0.012)); }
+  T.push({ cfg: mtn, pts: rp, per: 5 });
+  const chunks = (pts, n) => { const out = []; for (let i = 0; i < pts.length; i += n) out.push(pts.slice(Math.max(0, i - 1), i + n)); return out; };
+  for (const c of chunks(zig(ridge, 0.66, 0.0, 1.0, 0.026), 6)) T.push({ cfg: mtn, pts: c, per: 6 });
+  T.push({ cfg: mtn, pts: hline(0.99, 0.01, 0.655, 0.003, 16, 1), per: 6 });
+  T.push({ wait: 45, boost: 20 });
+  // 5. nearer hills, darker and cooler; spray a few drops while damp for soft blooms
+  const ridge2 = (u) => 0.615 - 0.035 * Math.sin(u * 5 + 0.6) - 0.012 * Math.sin(u * 14);
+  const hills = B([{ id: 'pg18', r: 3 }, { id: 'sap', r: 2 }, { id: 'pb29', r: 1 }], { shape: 'round', sizeMm: 14, water: 0.7, C: 2.6 });
+  const rp2 = []; for (let i = 0; i <= 30; i++){ const u = i / 30; rp2.push(uv2s(u, ridge2(u) + 0.012)); }
+  T.push({ cfg: hills, pts: rp2, per: 5 });
+  for (const c of chunks(zig(ridge2, 0.74, 0.0, 1.0, 0.028), 6)) T.push({ cfg: hills, pts: c, per: 6 });
+  T.push({ cfg: hills, pts: hline(0.01, 0.99, 0.735, 0.003, 16, 2), per: 6 });
+  T.push({ wait: 30, boost: 6 });
+  T.push({ spray: [0.3, 0.68], frames: 5, cfg: brushCfg('spray', { sizeMm: 20 }) });
+  T.push({ spray: [0.78, 0.66], frames: 4, cfg: brushCfg('spray', { sizeMm: 16 }) });
+  // 6. meadow wash, then dry-brush texture on top
+  const meadow = B([{ id: 'sap', r: 3 }, { id: 'py43', r: 2 }], { shape: 'mop', sizeMm: 22, water: 0.75, C: 1.9 });
+  for (let k = 0; k < 4; k++) T.push({ cfg: meadow, pts: hline(k % 2 ? 0.99 : 0.01, k % 2 ? 0.01 : 0.99, 0.79 + k * 0.064, 0.006, 16, k), per: 5 });
+  T.push({ wait: 50, boost: 30 });
+  const dryb = B([{ id: 'sap', r: 4 }, { id: 'pb29', r: 1 }, { id: 'pbr7c', r: 1 }], { shape: 'flat', sizeMm: 20, water: 0.2, C: 4.4 });
+  T.push({ cfg: dryb, pts: hline(0.01, 0.99, 0.86, 0.012, 18, 2), per: 6 });
+  T.push({ cfg: dryb, pts: hline(0.99, 0.15, 0.94, 0.01, 16, 4), per: 6 });
+  return T;
+}
+let demo = null;
+function startDemo(){ demo = { tasks: demoScript(), i: 0, st: null, k: 0, wait: 0 }; $('#demoTag').hidden = false; }
+function stopDemo(keepTag){ if (demo){ if (demo.st) strokeTick(demo.st); demo = null; boost = fastDry ? 40 : 1; } if (!keepTag) $('#demoTag').hidden = true; else setTimeout(() => { $('#demoTag').hidden = true; }, 200); }
+function demoTick(){
+  if (!demo) return;
+  const task = demo.tasks[demo.i];
+  if (!task){ demo = null; return; }
+  if (task.wait){ boost = fastDry ? 40 : (task.boost || 1); if (++demo.wait >= task.wait){ demo.wait = 0; demo.i++; boost = fastDry ? 40 : 1; } return; }
+  if (task.salt){ const st = newStroke(task.cfg, uv2s(...task.salt)); strokeTick(st); demo.i++; return; }
+  if (task.spray){ const st = newStroke(task.cfg, uv2s(...task.spray)); for (let f = 0; f < task.frames; f++) strokeTick(st); demo.i++; return; }
+  if (!demo.st){ demo.st = newStroke(task.cfg, task.pts[0]); demo.k = 1; strokeStart(demo.st); return; }
+  const st = demo.st; const nxt = task.pts.slice(demo.k, demo.k + task.per); demo.k += task.per;
+  if (task.taper) st.pm = Math.max(0.15, 1 - 0.85 * demo.k / task.pts.length);
+  st.queue.push(...nxt); if (nxt.length) st.cur = nxt[nxt.length - 1];
+  strokeTick(st);
+  if (demo.k >= task.pts.length){ demo.st = null; demo.i++; }
+}
+
+/* ---------------- Frame loop ---------------- */
+function wake(n = 240){ awake = Math.max(awake, n); }
+let frameNo = 0;
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function frame(){ tickFrame(true); requestAnimationFrame(frame); }
+function tickFrame(draw){
+  frameNo++;
+  const reps = (REDUCED && demo) ? 6 : 1;
+  for (let rep = 0; rep < reps; rep++){
+    if (demo){ demoTick(); wake(120); }
+    if (user){ strokeTick(user); wake(120); if (frameNo % 3 === 0) refreshRes(); }
+    const wetKnown = red.maxH > 0.0012 || red.maxS > 0.012 || red.heat > 0.01;
+    if (awake > 0 || wetKnown || user || demo){
+      const steps = 3 * state.speed;
+      for (let i = 0; i < steps; i++) simStep();
+      if (!user) airNow = [0, 0, 0, 1];
+      awake--; dirty = true;
+      if (frameNo % 20 === 0){ reduce(); updateArea(); }
+    }
+  }
+  if (dirty && draw){ render(); dirty = false; }
+  if (pointerOver && cursorSim && frameNo % 6 === 0) updateProbe();
+}
+function updateArea(){
+  const el = $('#stArea'); const pct = Math.round(red.wet * 100);
+  if (fastDry && red.maxH < 0.0012 && red.maxS < 0.03){ fastDry = false; boost = 1; setDryBtn(); toast('Kağıt kurudu'); }
+  if (red.maxH < 0.0012 && red.maxS < 0.012) el.textContent = 'Kağıt kuru';
+  else el.textContent = (fastDry ? 'Kurutuluyor · ' : 'Islak alan ') + '%' + Math.max(1, pct);
+}
+function updateProbe(){
+  const v = probe(cursorSim[0], cursorSim[1]); if (!v) return;
+  let t, col;
+  if (v.h > 0.05){ t = 'Su birikintisi — boya akar, kenarda koyu halka bırakır'; col = '#2E5DA8'; }
+  else if (v.h > 0.006){ t = 'Parlak ıslak — ıslak üstüne ıslak için ideal'; col = '#3D7CC4'; }
+  else if (v.h > 0.0012){ t = 'Islak, parlaklık azalıyor'; col = '#6C9CC9'; }
+  else if (v.s > 0.35){ t = 'Nemli, mat — tuz ve kaldırma zamanı; su eklemek çiçeklenme yapar'; col = '#8EAFC4'; }
+  else if (v.s > 0.06){ t = 'Neredeyse kuru — su eklemek çiçeklenme yapar'; col = '#B4C2C8'; }
+  else { t = 'Kuru — keskin kenarlar; sırlama güvenli'; col = 'transparent'; }
+  $('#stWet').textContent = t; $('#wetDot').style.background = col;
+}
+
+/* ---------------- Canvas sizing ---------------- */
+function layout(){
+  const board = $('#board'); const sheet = $('#sheet');
+  const small = matchMedia('(max-width: 1000px)').matches;
+  const bw = board.clientWidth - 32 - 20;
+  let w;
+  if (small) w = bw;
+  else { const bh = board.clientHeight - 22 - 12 - 12 - 32 - 24; w = Math.min(bw, bh * ASPECT); }
+  w = Math.max(200, Math.floor(w)); const h = Math.round(w / ASPECT);
+  sheet.style.width = w + 'px'; sheet.style.height = h + 'px';
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const cw = Math.min(PW, Math.round(w * dpr)); const ch = Math.round(cw / ASPECT);
+  if (cv.width !== cw || cv.height !== ch){ cv.width = cw; cv.height = ch; }
+  dirty = true;
+}
+new ResizeObserver(layout).observe($('#board'));
+
+/* ---------------- UI ---------------- */
+let toastT;
+function toast(m){ const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2600); }
+let askCb = null;
+function ask(title, msg, yes, cb){ $('#askTitle').textContent = title; $('#askMsg').textContent = msg; $('#askYes').textContent = yes; askCb = cb; $('#askModal').hidden = false; $('#askYes').focus(); }
+$('#askNo').onclick = () => { $('#askModal').hidden = true; askCb = null; };
+$('#askYes').onclick = () => { $('#askModal').hidden = true; const c = askCb; askCb = null; if (c) c(); };
+
+// tools
+const toolsEl = $('#tools');
+for (const t of TOOLS){
+  const b = document.createElement('button'); b.className = 'tool'; b.dataset.tool = t.id; b.title = `${t.title} (${t.key.toUpperCase()})`;
+  b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${t.svg}</svg><span>${t.label}</span>`;
+  b.onclick = () => setTool(t.id); toolsEl.appendChild(b);
+}
+const SHOW = { shape: ['brush', 'water'], size: TOOLS.map((t) => t.id), water: ['brush', 'water'], cons: ['brush'], res: ['brush', 'water'], salt: ['salt'] };
+function setTool(id){
+  state.tool = id; const t = TOOLS.find((x) => x.id === id);
+  for (const b of toolsEl.children) b.setAttribute('aria-pressed', String(b.dataset.tool === id));
+  $('#toolTitle').textContent = t.title; $('#toolTip').textContent = t.tip;
+  for (const k in SHOW) document.querySelectorAll('.grp-' + k).forEach((el) => { el.hidden = !SHOW[k].includes(id); });
+  $('#sizeLab').textContent = ['salt', 'spray', 'dryer', 'blot'].includes(id) ? 'Alan' : 'Boyut';
+}
+function segInit(el, get, set){
+  const sync = () => { for (const b of el.children) b.setAttribute('aria-pressed', String(b.dataset.v === String(get()))); };
+  el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; set(b.dataset.v); sync(); });
+  sync(); return sync;
+}
+segInit($('#shapeSeg'), () => state.shape, (v) => { state.shape = v; });
+segInit($('#saltSeg'), () => state.salt, (v) => { state.salt = v; });
+const consSeg = $('#consSeg');
+CONS.forEach((c, i) => { const b = document.createElement('button'); b.dataset.v = i; b.textContent = c.n; b.title = `Kıvam: ${c.n}`; consSeg.appendChild(b); });
+segInit(consSeg, () => state.cons, (v) => { state.cons = +v; });
+segInit($('#speedSeg'), () => state.speed, (v) => { state.speed = +v; dryEst(); });
+function dryEst(){
+  const humF = clamp((1 - state.humidity / 100) / 0.45, 0.12, 2.2); const pp = paper.p;
+  const sec = Math.round(26 * Math.sqrt(pp.cap / 0.09) / (humF * pp.evap * state.speed));
+  $('#dryEst').textContent = `Orta boy bir yıkama bu koşullarda yaklaşık ${sec} saniyede kurur (gerçekte ${Math.max(2, Math.round(sec * state.speed * 0.4))} dakika kadar).`;
+}
+function waterLabel(v){ return v < 0.25 ? 'kuru fırça' : v < 0.5 ? 'nemli' : v < 0.85 ? 'ıslak' : 'çok sulu'; }
+$('#sizeR').oninput = (e) => { state.sizeMm = +e.target.value; $('#sizeO').textContent = state.sizeMm + ' mm'; };
+$('#waterR').oninput = (e) => { state.water = e.target.value / 100; $('#waterO').textContent = '%' + e.target.value; refreshRes(); };
+$('#humR').oninput = (e) => { state.humidity = +e.target.value; $('#humO').textContent = '%' + e.target.value; dryEst(); };
+function refreshRes(){
+  const v = user && (user.cfg.tool === 'brush' || user.cfg.tool === 'water') ? user.V : state.water;
+  $('#resBar').style.width = Math.round(v * 100) + '%';
+  $('#resVal').textContent = '%' + Math.round(v * 100) + ' · ' + waterLabel(v);
+  $('#resLab').textContent = user ? 'Fırçadaki su (vuruşta azalır)' : 'Fırçadaki su (her vuruşta dolar)';
+}
+
+// palettes
+const allPalettes = () => PRESETS.concat(state.custom);
+const curPal = () => allPalettes().find((p) => p.id === state.paletteId) || PRESETS[1];
+function wellParts(w){ return typeof w === 'string' ? [{ id: w, r: 1 }] : w.mix.map((q) => ({ id: q.id, r: q.r })); }
+function wellName(w){ return typeof w === 'string' ? PIG[w].n : w.n; }
+function wellCode(w){ return typeof w === 'string' ? PIG[w].ci.split('·')[0] : 'karışım'; }
+function renderPalSelect(){
+  const sel = $('#palSel'); sel.innerHTML = '';
+  const g1 = document.createElement('optgroup'); g1.label = 'Hazır paletler';
+  PRESETS.forEach((p) => g1.appendChild(new Option(p.n, p.id)));
+  sel.appendChild(g1);
+  if (state.custom.length){ const g2 = document.createElement('optgroup'); g2.label = 'Paletlerim'; state.custom.forEach((p) => g2.appendChild(new Option(p.n, p.id))); sel.appendChild(g2); }
+  sel.value = curPal().id;
+}
+$('#palSel').onchange = (e) => { state.paletteId = e.target.value; state.selWell = -1; persist(); renderPalette(); };
+function renderPalette(){
+  const pal = curPal(); const wells = $('#wells'); wells.innerHTML = '';
+  $('#palDesc').textContent = pal.d || 'Kendi paletiniz. Pigment kataloğundan ekleyin, karışımlarınızı kaydedin.';
+  $('#palCount').textContent = pal.w.length + ' hazne';
+  $('#delPalBtn').hidden = !pal.custom;
+  $('#catBtn').textContent = pal.custom ? 'Paleti düzenle' : 'Pigment kataloğu';
+  if (!pal.w.length){ const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'Palet boş. “Paleti düzenle” ile pigment ekleyin.'; wells.appendChild(e); }
+  pal.w.forEach((w, i) => {
+    const wrap = document.createElement('div'); wrap.className = 'wellwrap';
+    const b = document.createElement('button'); b.className = 'well'; b.title = wellName(w);
+    b.setAttribute('aria-label', wellName(w)); b.style.background = wellCSS(mixVec(wellParts(w)).A);
+    b.setAttribute('aria-pressed', String(i === state.selWell));
+    b.onclick = () => pickWell(i);
+    const code = document.createElement('span'); code.className = 'wellcode'; code.textContent = wellCode(w);
+    wrap.append(b, code);
+    if (pal.custom){ const x = document.createElement('button'); x.className = 'wellx'; x.textContent = '×'; x.title = 'Hazneyi boşalt'; x.setAttribute('aria-label', wellName(w) + ' haznesini kaldır');
+      x.onclick = (ev) => { ev.stopPropagation(); pal.w.splice(i, 1); if (state.selWell === i) state.selWell = -1; persist(); renderPalette(); }; wrap.appendChild(x); }
+    wells.appendChild(wrap);
+  });
+}
+function pickWell(i){
+  const w = curPal().w[i]; const parts = wellParts(w);
+  if (state.mixMode){
+    for (const q of parts){ const ex = state.mix.find((m) => m.id === q.id); if (ex) ex.r = Math.min(10, ex.r + 2); else if (state.mix.length < 4) state.mix.push({ id: q.id, r: typeof w === 'string' ? 5 : q.r }); }
+    state.selWell = -1;
+  } else { state.mix = parts.map((q) => ({ id: q.id, r: q.r })); state.selWell = i; }
+  renderPalette(); renderPaint();
+}
+$('#mixBtn').onclick = () => { state.mixMode = !state.mixMode; $('#mixBtn').setAttribute('aria-pressed', String(state.mixMode));
+  if (state.mixMode && state.mix.length === 1) state.mix[0].r = 5;
+  toast(state.mixMode ? 'Karıştırma açık: dokunduğunuz hazneler fırçadaki boyaya eklenir' : 'Karıştırma kapalı'); renderPaint(); };
+function meter(v, max = 5){ let s = '<span class="meter">'; for (let i = 1; i <= max; i++) s += `<i class="${i <= v ? 'on' : ''}"></i>`; return s + '</span>'; }
+const transpText = (op) => op < 0.3 ? 'Şeffaf' : op < 0.6 ? 'Yarı şeffaf' : op < 0.8 ? 'Yarı opak' : 'Opak';
+const lvl = (v) => v < 0.15 ? 'Düşük' : v < 0.5 ? 'Orta' : 'Yüksek';
+function renderPaint(){
+  const v = mixVec(state.mix); $('#strip').style.background = stripCSS(v.A);
+  const parts = $('#mixParts'); parts.innerHTML = '';
+  const info = $('#pigInfo');
+  if (state.mix.length > 1 || state.mixMode){
+    state.mix.forEach((q, i) => {
+      const p = PIG[q.id]; const row = document.createElement('div'); row.className = 'part';
+      row.innerHTML = `<span class="dotc" style="background:${cssAt(p.A, 1.1)}"></span><span title="${p.n}">${p.n}</span><input type="range" min="1" max="10" value="${q.r}" aria-label="${p.n} oranı"><button title="Karışımdan çıkar" aria-label="${p.n} karışımdan çıkar">×</button>`;
+      row.querySelector('input').oninput = (e) => { q.r = +e.target.value; $('#strip').style.background = stripCSS(mixVec(state.mix).A); };
+      row.querySelector('button').onclick = () => { if (state.mix.length > 1){ state.mix.splice(i, 1); renderPaint(); } };
+      parts.appendChild(row);
+    });
+    const g = v.B[1], s = v.B[2];
+    info.innerHTML = `<p class="note">${state.mixMode ? 'Haznelere dokunarak renk ekleyin, oranları kaydırıcıyla ayarlayın. ' : ''}Karışım granülasyonu ${lvl(g).toLowerCase()}, boyayıcılığı ${lvl(s).toLowerCase()}.</p>`;
+  } else {
+    const p = PIG[state.mix[0].id];
+    info.innerHTML = `<div class="pname"><b>${p.n}</b><code>${p.ci}</code></div>
+      <dl class="props"><dt>Şeffaflık</dt><dd>${meter(Math.round(1 + p.op * 4))} ${transpText(p.op)}</dd>
+      <dt>Boyayıcılık</dt><dd>${meter(Math.round(1 + p.st * 4))} ${lvl(p.st)}</dd>
+      <dt>Granülasyon</dt><dd>${meter(Math.round(1 + p.g * 4))} ${lvl(p.g)}</dd>
+      <dt>Işık haslığı</dt><dd><code style="font:500 11.5px var(--f-mono)">${p.lf}</code> ${p.lf === 'I' ? 'Mükemmel' : 'Çok iyi'}</dd></dl>
+      <p class="note">${p.note}</p>`;
+  }
+  $('#addMixBtn').hidden = state.mix.length < 2;
+}
+$('#addMixBtn').onclick = () => {
+  let pal = curPal();
+  if (!pal.custom){ pal = { id: 'u' + Date.now(), n: nextName(), d: '', w: pal.w.slice(), custom: true }; state.custom.push(pal); state.paletteId = pal.id; toast(`“${pal.n}” oluşturuldu ve karışım eklendi`); }
+  else toast('Karışım palete eklendi');
+  const name = state.mix.map((q) => PIG[q.id].n.split(' ')[0]).join(' + ');
+  pal.w.push({ n: name, mix: state.mix.map((q) => ({ id: q.id, r: q.r })) });
+  state.selWell = pal.w.length - 1; persist(); renderPalSelect(); renderPalette();
+};
+function nextName(){ let i = 1; while (state.custom.some((p) => p.n === 'Paletim ' + i)) i++; return 'Paletim ' + i; }
+$('#newPalBtn').onclick = () => { const pal = { id: 'u' + Date.now(), n: nextName(), d: '', w: [], custom: true }; state.custom.push(pal); state.paletteId = pal.id; state.selWell = -1; persist(); renderPalSelect(); renderPalette(); openCatalog(); };
+$('#dupPalBtn').onclick = () => { const src = curPal(); const pal = { id: 'u' + Date.now(), n: src.custom ? src.n + ' (kopya)' : src.n + ' · benim', d: '', w: JSON.parse(JSON.stringify(src.w)), custom: true }; state.custom.push(pal); state.paletteId = pal.id; persist(); renderPalSelect(); renderPalette(); toast(`“${pal.n}” oluşturuldu; artık düzenleyebilirsiniz`); };
+$('#delPalBtn').onclick = () => { const pal = curPal(); if (!pal.custom) return; ask('Palet silinsin mi?', `“${pal.n}” ve içindeki karışımlar kalıcı olarak silinecek.`, 'Sil', () => { state.custom = state.custom.filter((p) => p !== pal); state.paletteId = 'land'; state.selWell = -1; persist(); renderPalSelect(); renderPalette(); }); };
+
+// catalog
+let famSel = 'all';
+const ICO_T = (op) => op < 0.3 ? '<svg viewBox="0 0 12 12"><rect x=".75" y=".75" width="10.5" height="10.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>'
+  : op < 0.7 ? '<svg viewBox="0 0 12 12"><rect x=".75" y=".75" width="10.5" height="10.5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M.75 11.25 11.25.75v10.5z" fill="currentColor"/></svg>'
+  : '<svg viewBox="0 0 12 12"><rect x=".75" y=".75" width="10.5" height="10.5" fill="currentColor" stroke="currentColor" stroke-width="1.2"/></svg>';
+function openCatalog(){
+  const pal = curPal(); const edit = !!pal.custom;
+  $('#catSub').textContent = edit ? `“${pal.n}” düzenleniyor — dokunarak hazneye ekleyin ya da çıkarın.` : 'Hazır paletler değişmez. Bir pigmente dokunarak fırçaya alın; kendi paletiniz için “Kopyala” ya da “Yeni palet”.';
+  $('#catTitle').textContent = edit ? 'Paleti düzenle' : 'Pigment kataloğu';
+  const nm = $('#palName'); nm.hidden = !edit; nm.value = pal.n;
+  nm.oninput = () => { pal.n = nm.value.trim() || pal.n; persist(); renderPalSelect(); };
+  renderFams(); renderCat(); $('#catModal').hidden = false; $('#catDone').focus();
+}
+function renderFams(){ const f = $('#fams'); f.innerHTML = ''; for (const [k, n] of FAMS){ const b = document.createElement('button'); b.textContent = n; b.setAttribute('aria-pressed', String(k === famSel)); b.onclick = () => { famSel = k; renderFams(); renderCat(); }; f.appendChild(b); } }
+function renderCat(){
+  const pal = curPal(); const edit = !!pal.custom; const g = $('#catGrid'); g.innerHTML = '';
+  for (const p of PIGMENTS){
+    if (famSel !== 'all' && p.fam !== famSel) continue;
+    const inPal = pal.w.includes(p.id);
+    const b = document.createElement('button'); b.className = 'pc'; b.setAttribute('aria-pressed', String(edit ? inPal : (state.mix.length === 1 && state.mix[0].id === p.id)));
+    b.innerHTML = `<div class="sw" style="background:${sheetCSS(p.A)}"></div><span class="chk">✓</span><b>${p.n}</b><code>${p.ci}</code>
+      <span class="ico" title="${transpText(p.op)} · granülasyon ${lvl(p.g).toLowerCase()} · boyayıcılık ${lvl(p.st).toLowerCase()} · ışık haslığı ${p.lf}">${ICO_T(p.op)} G${Math.round(p.g * 4)} · B${Math.round(p.st * 4)} · ${p.lf}</span>`;
+    b.onclick = () => {
+      if (edit){ const i = pal.w.indexOf(p.id); if (i >= 0) pal.w.splice(i, 1); else pal.w.push(p.id); persist(); renderCat(); renderPalette(); }
+      else { state.mix = [{ id: p.id, r: 1 }]; state.selWell = pal.w.indexOf(p.id); state.mixMode = false; $('#mixBtn').setAttribute('aria-pressed', 'false'); renderCat(); renderPalette(); renderPaint(); }
+    };
+    g.appendChild(b);
+  }
+}
+$('#catBtn').onclick = openCatalog;
+$('#catDone').onclick = () => { $('#catModal').hidden = true; };
+for (const m of ['#catModal', '#snapModal', '#askModal']) $(m).addEventListener('click', (e) => { if (e.target === e.currentTarget) e.currentTarget.hidden = true; });
+
+// paper list
+function paperSwatch(p){
+  const fib = p.sw.fib ? `<feTurbulence type='fractalNoise' baseFrequency='0.012 0.3' numOctaves='2' seed='4' result='a'/>` : '';
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='56' height='56'><filter id='f' x='0' y='0' width='100%' height='100%'>${fib}<feTurbulence type='fractalNoise' baseFrequency='${p.sw.f}' numOctaves='3' seed='3'/><feDiffuseLighting lighting-color='${p.tone}' surfaceScale='${p.sw.s}' diffuseConstant='1.04'><feDistantLight azimuth='225' elevation='58'/></feDiffuseLighting></filter><rect width='56' height='56' filter='url(#f)'/></svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+function renderPapers(){
+  const l = $('#paperList'); l.innerHTML = '';
+  for (const p of PAPERS){
+    const b = document.createElement('button'); b.className = 'paper-opt'; b.setAttribute('aria-pressed', String(p.id === state.paperId));
+    b.innerHTML = `<span class="paper-sw"></span><span><b>${p.n}</b><span class="spec">${p.spec}</span></span>`;
+    b.querySelector('.paper-sw').style.backgroundImage = paperSwatch(p);
+    b.onclick = () => { if (p.id === state.paperId) return;
+      const go = () => { state.paperId = p.id; paper = p; persist(); newSheet(); renderPapers(); renderPalette(); renderPaint(); };
+      if (painted || demo) ask('Kağıt değiştirilsin mi?', `${p.n} (${p.spec}) üzerine yeni bir tabaka açılacak; mevcut resim silinir.`, 'Yeni tabaka aç', go); else go(); };
+    l.appendChild(b);
+  }
+  const p = paper;
+  $('#paperDetail').innerHTML = `<p class="note">${p.d}</p><div class="mgrid">${Object.entries(p.m).map(([k, v]) => `<div><span>${k}</span>${meter(v)}</div>`).join('')}</div><p class="note" style="font-size:12px">${p.size}</p>`;
+  $('#paperChip').textContent = `${p.n} · ${p.spec.split('·').pop().trim()}`;
+  dryEst();
+}
+
+// tilt dial
+const tiltSvg = $('#tilt');
+function drawTilt(){
+  const [tx, ty] = state.tilt; const R = 54;
+  $('#tiltKnob').setAttribute('cx', 60 + tx * R); $('#tiltKnob').setAttribute('cy', 60 + ty * R);
+  $('#tiltLine').setAttribute('x2', 60 + tx * R); $('#tiltLine').setAttribute('y2', 60 + ty * R);
+  const mag = Math.hypot(tx, ty); const deg = Math.round(mag * 30);
+  tiltSvg.setAttribute('aria-valuenow', deg);
+  if (deg < 1){ $('#tiltVal').textContent = 'Düz masa'; return; }
+  const a = Math.atan2(ty, tx) * 180 / Math.PI;
+  const dirs = ['sağa', 'sağ aşağı', 'aşağı', 'sol aşağı', 'sola', 'sol yukarı', 'yukarı', 'sağ yukarı'];
+  const idx = ((Math.round(a / 45) % 8) + 8) % 8;
+  $('#tiltVal').textContent = `${deg}° · su ${dirs[idx]} akar`;
+}
+function tiltFrom(e){ const r = tiltSvg.getBoundingClientRect(); let x = ((e.clientX - r.left) / r.width * 120 - 60) / 54, y = ((e.clientY - r.top) / r.height * 120 - 60) / 54; const m = Math.hypot(x, y); if (m > 1){ x /= m; y /= m; } if (m < 0.06){ x = 0; y = 0; } state.tilt = [x, y]; drawTilt(); wake(); }
+tiltSvg.addEventListener('pointerdown', (e) => { tiltSvg.setPointerCapture(e.pointerId); tiltFrom(e); });
+tiltSvg.addEventListener('pointermove', (e) => { if (e.buttons) tiltFrom(e); });
+tiltSvg.addEventListener('keydown', (e) => { const d = { ArrowUp: [0, -0.1], ArrowDown: [0, 0.1], ArrowLeft: [-0.1, 0], ArrowRight: [0.1, 0] }[e.key]; if (!d) return; e.preventDefault();
+  let [x, y] = state.tilt; x += d[0]; y += d[1]; const m = Math.hypot(x, y); if (m > 1){ x /= m; y /= m; } state.tilt = [x, y]; drawTilt(); wake(); });
+$('#tiltReset').onclick = () => { state.tilt = [0, 0]; drawTilt(); };
+
+// global actions
+function newSheet(){ stopDemo(false); genPaper(); clearAll(); undoStack.splice(0).forEach((s) => snapPool.push(s)); $('#undoBtn').disabled = true; painted = false; red = { maxH: 0, maxS: 0, wet: 0, heat: 0 }; fastDry = false; boost = 1; setDryBtn(); updateArea(); wake(); dirty = true; }
+$('#newBtn').onclick = () => { if (painted || demo) ask('Yeni tabaka açılsın mı?', 'Mevcut resim silinir ve aynı kağıttan temiz bir tabaka açılır.', 'Yeni tabaka aç', newSheet); else newSheet(); };
+$('#undoBtn').onclick = undo;
+$('#wetAllBtn').onclick = () => { stopDemo(true); pushUndo(); painted = true; toolPass({ uMode: 1, uA: [SW / 2, SH / 2], uB: [SW / 2, SH / 2], uR: SW * 2, uShape: 0, uTarget: 0.075, uFlow: 1, uDir: [1, 0], uSeed: 3, uStrokeSeed: 1, uDry: 0 }); wake(); toast('Kağıt ıslatıldı — parlaklık sürerken boyayın'); };
+function setDryBtn(){ const b = $('#dryBtn'); b.classList.toggle('busy', fastDry); b.querySelector('span').textContent = fastDry ? 'Kurutuluyor…' : 'Hızlı kurut'; }
+$('#dryBtn').onclick = () => { fastDry = !fastDry; boost = fastDry ? 40 : 1; setDryBtn(); wake(); };
+$('#unmaskAllBtn').onclick = () => { pushUndo(); mulX([0, 1, 1, 1]); dirty = true; toast('Maske kaldırıldı'); };
+$('#saltOffBtn').onclick = () => { pushUndo(); mulX([1, 0, 1, 1]); dirty = true; toast('Tuz kristalleri fırçalandı'); };
+$('#snapBtn').onclick = () => {
+  render(); let url = '';
+  try { url = cv.toDataURL('image/png'); } catch (e){ toast('Görüntü alınamadı'); return; }
+  $('#snapImg').src = url; $('#snapModal').hidden = false;
+};
+$('#snapClose').onclick = () => { $('#snapModal').hidden = true; };
+$('#snapCopy').onclick = async () => {
+  try { const blob = await (await fetch($('#snapImg').src)).blob(); await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); toast('Görsel panoya kopyalandı'); }
+  catch (e){ toast('Panoya kopyalanamadı; görsele sağ tıklayıp kaydedin'); }
+};
+document.addEventListener('keydown', (e) => {
+  if (e.target.closest('input,select,textarea')) return;
+  if (e.key === 'Escape'){ for (const m of ['#catModal', '#snapModal', '#askModal']) $(m).hidden = true; return; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){ e.preventDefault(); undo(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === '[' || e.key === ']'){ const r = $('#sizeR'); r.value = clamp(+r.value + (e.key === ']' ? 2 : -2), 2, 50); r.dispatchEvent(new Event('input')); return; }
+  const t = TOOLS.find((x) => x.key === e.key.toLowerCase()); if (t) setTool(t.id);
+});
+cv.addEventListener('webglcontextlost', (e) => { e.preventDefault(); fatal('Grafik bağlamı kayboldu. Sayfayı yenileyin.'); });
+
+/* ---------------- Boot ---------------- */
+setTool('brush'); renderPalSelect();
+if (matchMedia('(hover: none)').matches) $('#stWet').textContent = 'Kağıda dokunduğunuz yerin ıslaklığı burada görünür';
+{ const pal = curPal(); const i = pal.w.indexOf('pb29'); if (i >= 0){ state.selWell = i; state.mix = [{ id: 'pb29', r: 1 }]; } else if (pal.w.length){ state.selWell = 0; state.mix = wellParts(pal.w[0]); } }
+renderPapers(); renderPalette(); renderPaint(); drawTilt(); refreshRes();
+genPaper(); clearAll(); layout(); startDemo(); updateArea();
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>

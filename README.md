@@ -4,6 +4,8 @@ Tarayıcıda çalışan, fizik tabanlı interaktif bir suluboya simülatörü.
 
 **Canlı sürüm:** https://erenciracioglu-dotcom.github.io/suluboya-atolyesi/
 
+![Suluboya Atölyesi'nde yapılmış örnek bir çalışma: sıcak pres kağıt, tuz dokuları, çiçeklenmeler ve katmanlı sırlamalar](ekran.jpg)
+
 Boya bir görüntü filtresi değil, GPU üzerinde (WebGL2) çalışan bir simülasyon: kağıdın üstünde akan su, kağıdın emdiği nem, suda yüzen ve kağıda oturmuş pigment ayrı ayrı hesaplanır. Renkler Kubelka–Munk modeliyle gerçek boya gibi karışır.
 
 ## Neler var
